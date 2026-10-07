@@ -7,7 +7,7 @@ Named after the plan chest: the wide, shallow-drawered cabinet where architects 
 ## What it is
 
 - **A repo layout** for design work done by agents: `DESIGN.md` (Stitch format) as the single source of visual truth, `CONTEXT.md` and `BRAND.md` for everything that is not a token, `system/` for materials, `concepts/` for free exploration, `prototypes/` for strict, developer-ready screens, `decisions/` for the decisions that outlive a pull request. Everything is self-contained HTML plus Markdown. See [docs/design-repo.md](docs/design-repo.md).
-- **Skills** that set up and work inside that repo: `init`, `organize`, `concept`, `prototype`, `review`, `diff`.
+- **Skills** that set up and work inside that repo: `init`, `organize`, `interview`, `concept`, `prototype`, `review`, `diff`, `conflict`.
 - **A diff tool**, `planchest diff`, that renders two versions of the pages side by side (or swipe, or onionskin) at any viewport, without spending a token. Two sides can be git refs, `ref:path`, or plain directories, so "main vs. this branch" and "dashboard-v1 vs. dashboard-v2" are the same command. The `diff` skill adds the human summary.
 
 Planchest does not depend on any design tool or canvas. Any agent that reads `AGENTS.md` can work in a Planchest repo; the skills are written for Claude Code.
@@ -38,10 +38,11 @@ Start a design repo:
 /planchest:init
 ```
 
-Bring in what you have (brand guide, Figma export, screenshots, a live product):
+Bring in what you have (brand guide, Figma export, screenshots, a live product). With nothing to work from, `organize` stops and asks for material; `interview` builds the brand, design system or context by asking you questions instead:
 
 ```
 /planchest:organize
+/planchest:interview design
 ```
 
 Explore, then build:
@@ -61,6 +62,12 @@ planchest diff main HEAD --paths prototypes/onboarding --serve
 planchest diff concepts/dashboard-v1 concepts/dashboard-v2 --serve
 ```
 
+When two sources disagree, or a merge stops on conflicts in the design repo, `conflict` walks through them one at a time, showing both versions as a diff or as rendered pages:
+
+```
+/planchest:conflict
+```
+
 The report (`.planchest/diff/index.html`, git-ignored) has three panels: the changed, added and removed pages and `data-page` sections on the left; both sides of the selected page in the centre, with side-by-side, swipe and onionskin modes, viewport presets, zoom and scroll sync; and on the right `summary.html` from the same directory, which the `diff` skill writes. The side panels can be hidden. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR.
 
 ## Example
@@ -75,7 +82,7 @@ node bin/planchest.js diff examples/stride/a examples/stride/b --serve
 
 ## Status
 
-Version 0.1: the repo layout, the six skills, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `review` checklist, and token generation from `DESIGN.md`.
+Version 0.1: the repo layout, the eight skills, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `review` checklist, and token generation from `DESIGN.md`.
 
 ## Develop
 
