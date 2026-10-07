@@ -61,7 +61,7 @@ planchest diff main HEAD --paths prototypes/onboarding --serve
 planchest diff concepts/dashboard-v1 concepts/dashboard-v2 --serve
 ```
 
-The report (`.planchest/diff/index.html`, git-ignored) lists changed, added and removed pages and `data-page` sections, shows both sides in iframes with side-by-side, swipe and onionskin modes, viewport presets and scroll sync, and reads `summary.html` from the same directory, which the `diff` skill writes. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR.
+The report (`.planchest/diff/index.html`, git-ignored) has three panels: the changed, added and removed pages and `data-page` sections on the left; both sides of the selected page in the centre, with side-by-side, swipe and onionskin modes, viewport presets, zoom and scroll sync; and on the right `summary.html` from the same directory, which the `diff` skill writes. The side panels can be hidden. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR.
 
 ## Example
 

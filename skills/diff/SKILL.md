@@ -38,7 +38,7 @@ The CLI is at `${CLAUDE_PLUGIN_ROOT}/bin/planchest.js` (run with `node`); if `pl
 
 ## Reading the report page
 
-Left: changed, added, removed pages (and their sections), unchanged collapsed, other changed files. Top bar: side by side, swipe (drag the split), onionskin (overlay with opacity); viewport presets 375 / 768 / 1280 or any width; scroll sync. The status badge is the `SPEC.md` status on side B.
+Three panels in a row. **Left, the files**: changed, added and removed pages (and their `data-page` sections), unchanged pages collapsed, then other changed files. **Centre, the preview**: both sides of the selected page, side by side, swipe (drag the split) or onionskin (overlay with opacity); viewport presets 375 / 768 / 1280 or any width and height; scroll sync. **Right, the summary**: `summary.html`, or a note that none has been written. The Files and Summary buttons in the header hide and show the side panels, so the preview can take the whole window. The zoom buttons (50 / 75 / 100 %, or any percentage) scale the preview without changing the viewport the pages render at; Fit picks the zoom at which both sides fit the window. The status badge is the `SPEC.md` status on side B.
 
 ## Don't
 

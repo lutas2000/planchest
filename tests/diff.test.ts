@@ -71,6 +71,10 @@ test("diff between directories writes a self-contained report", () => {
     assert.ok(page.includes('"prototypes/onboarding/signup.html"'));
     // summary.html links like #file:section only work if the page follows the hash after load
     assert.match(page, /addEventListener\("hashchange", showHash\)/);
+    // three panels (files, preview, summary) and a zoom control
+    assert.match(page, /<nav id="nav">/);
+    assert.match(page, /<aside id="summary">/);
+    assert.match(page, /id="zoom"/);
   } finally {
     rmSync(out, { recursive: true, force: true });
   }
