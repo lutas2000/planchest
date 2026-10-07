@@ -21,6 +21,7 @@ Planchest introduces a handful of names that users, agents and tools all have to
 | skill `prototype` | `promote-to-ui` | A prototype is not the same file upgraded; it is reimplemented from the concept. `concept` and `prototype` are symmetric names, one per directory. |
 | skill `review` | `design-review` | The plugin prefix is already `planchest`; no need to repeat the domain. |
 | skill `organize` | `intake`, `gather` | Organize also covers every round after the first; intake only covers the first. |
+| `flows/sitemap.html` | `MAP.md`, `screens.md` | A sitemap is what designers call the map of a product's screens. HTML rather than Markdown so the diff report renders it and a reorganised navigation shows as a visual diff. |
 | `.planchest/` | | Local output directory inside a design repo, git-ignored. |
 | `onionskin` (report mode) | | From animation: the previous frame laid over the next to see the change. |
 | `summary.html` | `notes.html` | The human-written part of the diff report. It is a summary for the reviewer, not working notes. |

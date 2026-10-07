@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stride sitemap</title>
+<style>
+body { font: 14px/1.5 -apple-system, system-ui, sans-serif; margin: 24px; color: #16181d; }
+h1 { font-size: 18px; margin: 0 0 4px; }
+p { margin: 0 0 16px; color: #667085; }
+ul { list-style: none; padding-left: 20px; border-left: 1px solid #e1e4ea; margin: 0; }
+body > ul { padding-left: 0; border-left: 0; }
+li { margin: 6px 0; }
+li > a { color: #16181d; text-decoration: none; border-bottom: 1px solid #e1e4ea; }
+li[data-status]::after { content: attr(data-status); font-size: 11px; color: #667085; margin-left: 8px; }
+li[data-status="missing"]::after { color: #d92d20; }
+li[data-flow]::before { content: attr(data-flow) " · "; font-size: 11px; color: #667085; }
+</style></head>
+<body>
+<h1>Stride 1.1</h1>
+<p>Three tabs. Every screen below is a step in a flow or a section of a concept. Runs are goal-first (decision 0001): the paused screen is gone, a countdown was added.</p>
+<ul>
+  <li>Home tab <ul>
+    <li data-flow="home" data-status="draft"><a href="../concepts/home/index.html#today">Today</a></li>
+    <li data-flow="home" data-status="draft"><a href="../concepts/home/index.html#weekly-goal">Weekly goal</a></li>
+    <li data-flow="home" data-status="draft"><a href="../concepts/home/index.html#plan">Plan</a></li>
+  </ul></li>
+  <li>Run tab <ul>
+    <li data-flow="run" data-status="approved"><a href="../prototypes/run/start.html">Start</a></li>
+    <li data-flow="run" data-status="approved"><a href="../prototypes/run/countdown.html">Countdown</a></li>
+    <li data-flow="run" data-status="approved"><a href="../prototypes/run/active.html">Active (pause in place)</a></li>
+    <li data-flow="run" data-status="approved"><a href="../prototypes/run/summary.html">Summary</a></li>
+  </ul></li>
+  <li>History tab <ul>
+    <li data-flow="history" data-status="approved"><a href="../prototypes/history/list.html">List</a></li>
+    <li data-flow="history" data-status="missing">Run detail</li>
+  </ul></li>
+</ul>
+</body></html>

@@ -16,7 +16,7 @@ Write in **English**: `SPEC.md`, `FLOW.md`, decisions, diff summaries, PR descri
 | `system/` | Materials: tokens, components, patterns, icons, brand assets | Only through `system/`-level PRs |
 | `concepts/` | Quick, unconstrained explorations for discussion | Agents, via the `concept` skill |
 | `prototypes/` | Rigorous, realistic, developer-ready screens | Agents, via the `prototype` skill |
-| `flows/` | Cross-platform user journeys every prototype maps back to | Agents and people |
+| `flows/` | Cross-platform user journeys every prototype maps back to; `flows/sitemap.html` maps every screen | Agents and people |
 | `decisions/` | Decisions lifted out of PR discussions so they are not relitigated | People, or agents when asked |
 
 Platform directories (`web/`, `mobile/`) are optional. When present, each holds its own `DESIGN.md` (platform differences only), `system/` (platform overrides), `concepts/` and `prototypes/`.
@@ -37,5 +37,6 @@ Platform directories (`web/`, `mobile/`) are optional. When present, each holds 
 - Before drawing anything, read the nearest `DESIGN.md`, the relevant `flows/*/FLOW.md`, and `system/components/INDEX.md`.
 - Prefer editing an existing prototype over creating a parallel one. Prefer a new concept over an unconstrained edit to a prototype.
 - Keep `SPEC.md` current: when the HTML changes, update the spec in the same commit.
+- Keep `flows/sitemap.html` current, if it exists: when a screen is added, removed or renamed, update its entry in the same commit.
 - Never hand-edit `system/tokens/tokens.json` or `tokens.css`; change `DESIGN.md` and regenerate (or, until the generator exists, change both in the same PR and say so).
 - When something here conflicts with a request, say so and point to the rule instead of silently breaking it.
