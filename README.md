@@ -17,7 +17,7 @@ Planchest does not depend on any design tool or canvas. Any agent that reads `AG
 As a Claude Code plugin:
 
 ```bash
-claude plugin marketplace add lutas/planchest
+claude plugin marketplace add lutas2000/planchest
 ```
 
 ```bash
