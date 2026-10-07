@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Countdown</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/button/button.css">
+<style>
+.count { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4); }
+.count b { font: 800 180px / 1 var(--font-num); color: var(--color-primary); }
+.count p { margin: 0; opacity: .7; }
+.skip { display: flex; justify-content: center; padding: 0 var(--space-5) var(--space-7); }
+</style></head>
+<body><div class="shell shell--run">
+  <div class="statusbar"><span>18:43</span><span>GPS ●</span></div>
+  <div class="count"><b>3</b><p>Goal 5 km · pace 5'45"</p></div>
+  <div class="skip"><button class="btn btn--secondary btn--on-dark">Tap to start now</button></div>
+</div></body></html>

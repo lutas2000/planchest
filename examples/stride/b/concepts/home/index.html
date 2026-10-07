@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home concept</title>
+<style>
+body { margin: 0; background: #eceef2; font-family: -apple-system, system-ui, sans-serif; color: #16181d; }
+section[data-page] { max-width: 390px; margin: 24px auto; background: #fff; border-radius: 28px; padding: 28px 24px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.eyebrow { font-size: 12px; letter-spacing: .12em; color: #667085; margin: 0 0 8px; }
+h1 { font-size: 28px; margin: 0 0 8px; }
+.num { font: 700 56px/1 ui-rounded, system-ui; letter-spacing: -.02em; }
+.bar { height: 12px; border-radius: 99px; background: #e8edf6; overflow: hidden; margin: 16px 0 8px; }
+.bar i { display: block; height: 100%; background: #1f6feb; }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 16px; text-align: center; font-size: 12px; color: #667085; }
+.days b { display: block; height: 36px; border-radius: 10px; background: #f2f4f7; margin-bottom: 4px; }
+.days b.on { background: #1f6feb; }
+.go { margin-top: 16px; width: 100%; height: 52px; border: 0; border-radius: 99px; background: #ff5a1f; color: #fff; font: 600 16px/1 inherit; }
+.plan { list-style: none; padding: 0; margin: 16px 0 0; }
+.plan li { display: grid; grid-template-columns: 64px 1fr 20px; padding: 14px 0; border-bottom: 1px solid #eceef2; color: #667085; }
+.plan li.done { color: #98a2b3; text-decoration: line-through; }
+.plan li.next { color: #16181d; font-weight: 600; }
+.plan li.next span { color: #ff5a1f; }
+</style></head>
+<body>
+<section data-page="today">
+  <p class="eyebrow">Today · Thu 8 Oct</p>
+  <h1>Easy 5 km</h1>
+  <p>24°C after 6 pm, good for a run. 5 km today puts you on track to hit your weekly goal by Sunday.</p>
+  <button class="go">Start 5 km</button>
+</section>
+<section data-page="weekly-goal">
+  <p class="eyebrow">Weekly goal</p>
+  <div class="num">12.4 <small style="font-size:20px">/ 20 km</small></div>
+  <div class="bar"><i style="width:62%"></i></div>
+  <p style="color:#667085;margin:0">7.6 km to go, 4 days left.</p>
+  <div class="days"><div><b class="on"></b>M</div><div><b></b>T</div><div><b class="on"></b>W</div><div><b></b>T</div><div><b class="on"></b>F</div><div><b></b>S</div><div><b></b>S</div></div>
+</section>
+<section data-page="plan">
+  <p class="eyebrow">Plan · First 10 km</p>
+  <h1>Week 3 of 8</h1>
+  <ol class="plan">
+    <li class="done"><b>Tue</b>Easy 4 km<span>✓</span></li>
+    <li class="done"><b>Thu</b>Intervals 6×400 m<span>✓</span></li>
+    <li class="next"><b>Today</b>Easy 5 km<span>→</span></li>
+    <li><b>Sun</b>Long run 7 km<span></span></li>
+  </ol>
+</section>
+</body></html>

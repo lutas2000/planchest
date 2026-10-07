@@ -1,0 +1,7 @@
+.splits { display: flex; flex-direction: column; gap: var(--space-2); }
+.split { display: grid; grid-template-columns: 28px 1fr 48px; align-items: center; gap: var(--space-3); font: 500 var(--text-sm) / 1 var(--font-num); font-variant-numeric: tabular-nums; }
+.split__km { color: var(--color-muted); }
+.split__bar { height: 10px; border-radius: var(--radius-full); background: var(--color-zone-steady); }
+.split__bar--easy { background: var(--color-zone-easy); }
+.split__bar--hard { background: var(--color-zone-hard); }
+.split__pace { text-align: right; }

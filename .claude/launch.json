@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fixture-diff",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "bin/planchest.js",
+        "diff",
+        "tests/fixtures/a",
+        "tests/fixtures/b",
+        "--serve",
+        "--port",
+        "4747"
+      ],
+      "port": 4747
+    },
+    {
+      "name": "stride-diff",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "bin/planchest.js",
+        "serve",
+        ".planchest/stride",
+        "--port",
+        "4748"
+      ],
+      "port": 4748
+    }
+  ]
+}

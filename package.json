@@ -1,0 +1,27 @@
+{
+  "name": "planchest",
+  "version": "0.1.0",
+  "description": "A design repo framework for AI agents: one repo for all design material, and a visual diff for reviewing what they produce.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "planchest": "./bin/planchest.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "skills",
+    "template"
+  ],
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.ts\""
+  },
+  "engines": {
+    "node": ">=23.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "^5.9.3"
+  }
+}

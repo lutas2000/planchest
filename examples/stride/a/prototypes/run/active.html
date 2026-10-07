@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Running</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/button/button.css">
+<link rel="stylesheet" href="../../system/components/metric/metric.css">
+<style>
+.hero { text-align: center; padding: var(--space-7) 0 var(--space-6); }
+.hero .metric { align-items: center; }
+.row { padding: var(--space-5) 0; border-top: 1px solid rgba(255,255,255,.1); border-bottom: 1px solid rgba(255,255,255,.1); text-align: center; }
+.row .metric { align-items: center; }
+.controls { display: flex; justify-content: center; padding: var(--space-7) 0; }
+</style></head>
+<body><div class="shell shell--run">
+  <div class="statusbar"><span>19:01</span><span>GPS ●</span></div>
+  <main class="body">
+    <div class="hero metric metric--lg"><span class="metric__value">3.42</span><span class="metric__label">km</span></div>
+    <div class="row metric-row">
+      <div class="metric"><span class="metric__value">19:28</span><span class="metric__label">Time</span></div>
+      <div class="metric"><span class="metric__value">5'41"</span><span class="metric__label">Current pace</span></div>
+      <div class="metric"><span class="metric__value">231</span><span class="metric__label">kcal</span></div>
+    </div>
+    <div class="controls"><button class="btn btn--secondary btn--on-dark btn--round">Pause</button></div>
+  </main>
+</div></body></html>

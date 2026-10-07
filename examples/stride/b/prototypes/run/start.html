@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Start a run</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/button/button.css">
+<link rel="stylesheet" href="../../system/components/metric/metric.css">
+<link rel="stylesheet" href="../../system/components/segmented/segmented.css">
+<link rel="stylesheet" href="../../system/components/tabbar/tabbar.css">
+<style>
+.map { height: 260px; border-radius: var(--radius-lg); background: var(--color-surface-variant); overflow: hidden; position: relative; }
+.map svg { width: 100%; height: 100%; display: block; }
+.you { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px; border-radius: 50%; background: var(--color-primary); border: 3px solid var(--color-surface); box-shadow: 0 0 0 10px rgba(255,90,31,.18); }
+.gps { position: absolute; left: var(--space-3); top: var(--space-3); display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: var(--radius-full); background: var(--color-surface); font-size: var(--text-xs); font-weight: 600; }
+.gps i { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success); }
+.goal { margin: var(--space-5) 0 var(--space-4); }
+.goal-value { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-4); }
+.step { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--color-outline); background: var(--color-surface); font-size: var(--text-lg); }
+.goal-value .metric { align-items: center; }
+.goal-value .metric__value { font-size: var(--text-xxl); }
+.start { display: flex; justify-content: center; padding: var(--space-2) 0; }
+</style></head>
+<body><div class="shell">
+  <div class="statusbar"><span>18:42</span><span>5G ▮▮▮</span></div>
+  <header class="appbar"><h1>Run</h1><p>Downtown · 24°C, cloudy</p></header>
+  <main class="body">
+    <div class="map">
+      <svg viewBox="0 0 340 260" aria-hidden="true">
+        <g stroke="#ffffff" stroke-width="10" fill="none">
+          <path d="M-10 50 H350"/><path d="M-10 160 H350"/><path d="M-10 240 H350"/>
+          <path d="M60 -10 V270"/><path d="M190 -10 V270"/><path d="M290 -10 V270"/>
+        </g>
+        <rect x="205" y="65" width="70" height="80" rx="8" fill="#d8eedd"/>
+      </svg>
+      <span class="gps"><i></i>GPS ready</span>
+      <span class="you"></span>
+    </div>
+    <div class="goal">
+      <div class="segmented" role="group" aria-label="Goal">
+        <button aria-pressed="false">Free</button>
+        <button aria-pressed="true">Distance</button>
+        <button aria-pressed="false">Time</button>
+      </div>
+      <div class="goal-value">
+        <button class="step" aria-label="Decrease">−</button>
+        <div class="metric"><span class="metric__value">5.0<span class="metric__unit">km</span></span><span class="metric__label">Target pace 5'45"</span></div>
+        <button class="step" aria-label="Increase">+</button>
+      </div>
+    </div>
+    <div class="start"><button class="btn btn--primary btn--round">Start</button></div>
+  </main>
+  <nav class="tabbar">
+    <a href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="4" r="2"/><path d="M7 21l3-6 3 2v5M10 15l1-6 4 3h4M6 11l3-2"/></svg>Run</a>
+    <a href="../history/list.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>History</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Me</a>
+  </nav>
+</div></body></html>

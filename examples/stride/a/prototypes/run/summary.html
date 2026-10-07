@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run summary</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/button/button.css">
+<link rel="stylesheet" href="../../system/components/metric/metric.css">
+<style>
+.route { height: 220px; border-radius: var(--radius-lg); background: var(--color-surface-variant); overflow: hidden; margin-bottom: var(--space-5); }
+.route svg { width: 100%; height: 100%; display: block; }
+.big { margin-bottom: var(--space-5); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4) var(--space-3); margin-bottom: var(--space-6); }
+</style></head>
+<body><div class="shell">
+  <div class="statusbar"><span>19:13</span><span>5G ▮▮▮</span></div>
+  <header class="appbar"><h1>Evening run</h1><p>Thu 8 Oct · City Park</p></header>
+  <main class="body">
+    <div class="route">
+      <svg viewBox="0 0 340 220" aria-hidden="true">
+        <g stroke="#ffffff" stroke-width="10" fill="none"><path d="M-10 50 H350"/><path d="M-10 170 H350"/><path d="M70 -10 V230"/><path d="M270 -10 V230"/></g>
+        <rect x="90" y="65" width="160" height="90" rx="10" fill="#d8eedd"/>
+        <path d="M70 170 V50 H270 V170 H70" stroke="var(--color-primary)" stroke-width="5" fill="none" stroke-linejoin="round"/>
+        <circle cx="70" cy="170" r="7" fill="var(--color-success)"/>
+      </svg>
+    </div>
+    <div class="big metric metric--lg"><span class="metric__value">5.21<span class="metric__unit">km</span></span><span class="metric__label">Distance</span></div>
+    <div class="grid">
+      <div class="metric"><span class="metric__value">29:46</span><span class="metric__label">Time</span></div>
+      <div class="metric"><span class="metric__value">5'43"</span><span class="metric__label">Avg pace</span></div>
+      <div class="metric"><span class="metric__value">352</span><span class="metric__label">kcal</span></div>
+      <div class="metric"><span class="metric__value">38<span class="metric__unit">m</span></span><span class="metric__label">Elevation</span></div>
+    </div>
+    <button class="btn btn--primary btn--block">Save</button>
+  </main>
+</div></body></html>

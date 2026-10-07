@@ -1,0 +1,9 @@
+/* Dark theme: overrides only. Load after tokens.css. */
+:root[data-theme="dark"] {
+  --color-primary: #7c9bff;
+  --color-on-primary: #0f1a3d;
+  --color-surface: #161614;
+  --color-on-surface: #ecece8;
+  --color-surface-variant: #1f1f1c;
+  --color-outline: #2c2c29;
+}

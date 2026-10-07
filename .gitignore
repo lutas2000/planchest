@@ -1,0 +1,4 @@
+node_modules/
+dist/
+.planchest/
+.DS_Store

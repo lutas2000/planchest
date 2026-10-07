@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paused</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/button/button.css">
+<link rel="stylesheet" href="../../system/components/metric/metric.css">
+<style>
+.paused { text-align: center; padding: var(--space-7) 0 var(--space-6); opacity: .55; }
+.paused .metric { align-items: center; }
+.tag { display: block; text-align: center; font-size: var(--text-sm); letter-spacing: .2em; margin-top: var(--space-4); }
+.controls { display: flex; justify-content: center; gap: var(--space-6); padding: var(--space-7) 0; }
+</style></head>
+<body><div class="shell shell--run">
+  <div class="statusbar"><span>19:03</span><span>GPS ●</span></div>
+  <span class="tag">Paused</span>
+  <main class="body">
+    <div class="paused metric metric--lg"><span class="metric__value">3.42</span><span class="metric__label">km · 19:28</span></div>
+    <div class="controls">
+      <button class="btn btn--danger btn--round">End</button>
+      <button class="btn btn--primary btn--round">Resume</button>
+    </div>
+  </main>
+</div></body></html>

@@ -1,0 +1,11 @@
+{
+  "name": "planchest",
+  "owner": { "name": "lutas lin" },
+  "plugins": [
+    {
+      "name": "planchest",
+      "source": ".",
+      "description": "A design repo framework for AI agents: set up and organize one repo for all design material, produce concepts and prototypes inside its rules, and review the result as a visual diff."
+    }
+  ]
+}

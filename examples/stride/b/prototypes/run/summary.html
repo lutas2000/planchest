@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run summary</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/button/button.css">
+<link rel="stylesheet" href="../../system/components/metric/metric.css">
+<link rel="stylesheet" href="../../system/components/split-bar/split-bar.css">
+<style>
+.saved { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--color-success); font-weight: 600; margin-top: var(--space-2); }
+.route { height: 200px; border-radius: var(--radius-lg); background: var(--color-surface-variant); overflow: hidden; margin-bottom: var(--space-5); }
+.route svg { width: 100%; height: 100%; display: block; }
+.big { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: var(--space-5); }
+.goal-met { font-size: var(--text-sm); font-weight: 600; color: var(--color-primary); }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-5); }
+.grid .metric__value { font-size: var(--text-lg); }
+h2 { font-size: var(--text-md); margin: 0 0 var(--space-3); }
+.card { margin-bottom: var(--space-5); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+</style></head>
+<body><div class="shell">
+  <div class="statusbar"><span>19:13</span><span>5G ▮▮▮</span></div>
+  <header class="appbar"><h1>Evening run</h1><p>Thu 8 Oct · City Park</p><span class="saved">✓ Saved automatically</span></header>
+  <main class="body">
+    <div class="route">
+      <svg viewBox="0 0 340 200" aria-hidden="true">
+        <g stroke="#ffffff" stroke-width="10" fill="none"><path d="M-10 40 H350"/><path d="M-10 160 H350"/><path d="M70 -10 V210"/><path d="M270 -10 V210"/></g>
+        <rect x="90" y="55" width="160" height="90" rx="10" fill="#d8eedd"/>
+        <g stroke-width="5" fill="none" stroke-linecap="round">
+          <path d="M70 160 V95" stroke="var(--color-zone-easy)"/>
+          <path d="M70 95 V40 H170" stroke="var(--color-zone-steady)"/>
+          <path d="M170 40 H270 V160" stroke="var(--color-zone-steady)"/>
+          <path d="M270 160 H70" stroke="var(--color-zone-hard)"/>
+        </g>
+        <circle cx="70" cy="160" r="7" fill="var(--color-on-surface)"/>
+      </svg>
+    </div>
+    <div class="big">
+      <div class="metric metric--lg"><span class="metric__value">5.21<span class="metric__unit">km</span></span><span class="metric__label">Distance</span></div>
+      <span class="goal-met">5 km goal reached</span>
+    </div>
+    <div class="grid">
+      <div class="metric"><span class="metric__value">29:46</span><span class="metric__label">Time</span></div>
+      <div class="metric"><span class="metric__value">5'43"</span><span class="metric__label">Avg pace</span></div>
+      <div class="metric"><span class="metric__value">352</span><span class="metric__label">kcal</span></div>
+      <div class="metric"><span class="metric__value">38<span class="metric__unit">m</span></span><span class="metric__label">Elevation</span></div>
+    </div>
+    <div class="card">
+      <h2>Splits</h2>
+      <div class="splits">
+        <div class="split"><span class="split__km">1</span><span class="split__bar split__bar--easy" style="width:72%"></span><span class="split__pace">5'58"</span></div>
+        <div class="split"><span class="split__km">2</span><span class="split__bar" style="width:82%"></span><span class="split__pace">5'44"</span></div>
+        <div class="split"><span class="split__km">3</span><span class="split__bar" style="width:88%"></span><span class="split__pace">5'36"</span></div>
+        <div class="split"><span class="split__km">4</span><span class="split__bar" style="width:79%"></span><span class="split__pace">5'49"</span></div>
+        <div class="split"><span class="split__km">5</span><span class="split__bar split__bar--hard" style="width:100%"></span><span class="split__pace">5'21"</span></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn--secondary">Delete</button>
+      <button class="btn btn--primary">Share</button>
+    </div>
+  </main>
+</div></body></html>

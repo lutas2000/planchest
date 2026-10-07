@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Button — examples</title>
+<link rel="stylesheet" href="../../tokens/tokens.css">
+<link rel="stylesheet" href="button.css">
+<style>
+  body { margin: 0; padding: var(--space-6); font: var(--text-md) / var(--line-height) var(--font-sans); background: var(--color-surface); color: var(--color-on-surface); }
+  h2 { font-size: var(--text-sm); color: var(--color-on-surface); opacity: .6; margin: var(--space-6) 0 var(--space-3); text-transform: uppercase; letter-spacing: .06em; }
+  .row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
+</style>
+</head>
+<body>
+<h1>Button</h1>
+
+<h2>Variants</h2>
+<div class="row">
+  <button class="btn btn--primary" type="button">Primary</button>
+  <button class="btn btn--secondary" type="button">Secondary</button>
+  <button class="btn btn--ghost" type="button">Ghost</button>
+  <button class="btn btn--danger" type="button">Danger</button>
+</div>
+
+<h2>Disabled</h2>
+<div class="row">
+  <button class="btn btn--primary" type="button" disabled>Primary</button>
+  <button class="btn btn--secondary" type="button" disabled>Secondary</button>
+  <button class="btn btn--ghost" type="button" disabled>Ghost</button>
+  <button class="btn btn--danger" type="button" disabled>Danger</button>
+</div>
+
+<h2>Loading</h2>
+<div class="row">
+  <button class="btn btn--primary" type="button" aria-busy="true">…</button>
+</div>
+
+<h2>Focus</h2>
+<div class="row">
+  <button class="btn btn--primary" type="button" autofocus>Focused</button>
+</div>
+</body>
+</html>

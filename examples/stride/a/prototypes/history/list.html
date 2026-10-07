@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run history</title>
+<link rel="stylesheet" href="../../system/tokens/tokens.css">
+<link rel="stylesheet" href="../../system/components/app-shell/app-shell.css">
+<link rel="stylesheet" href="../../system/components/metric/metric.css">
+<link rel="stylesheet" href="../../system/components/tabbar/tabbar.css">
+<style>
+.month { display: flex; justify-content: space-between; align-items: baseline; margin: var(--space-5) 0 var(--space-3); }
+.month h2 { margin: 0; font-size: var(--text-lg); }
+.run { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); padding: var(--space-4) 0; border-bottom: 1px solid var(--color-outline); }
+.run h3 { margin: 0 0 2px; font-size: var(--text-md); }
+.run p { margin: 0; font-size: var(--text-sm); }
+.run .metric { text-align: right; }
+.run .metric__value { font-size: var(--text-lg); }
+</style></head>
+<body><div class="shell">
+  <div class="statusbar"><span>21:05</span><span>5G ▮▮▮</span></div>
+  <header class="appbar"><h1>History</h1></header>
+  <main class="body">
+    <div class="card metric-row">
+      <div class="metric"><span class="metric__value">48.6<span class="metric__unit">km</span></span><span class="metric__label">October</span></div>
+      <div class="metric"><span class="metric__value">9</span><span class="metric__label">Runs</span></div>
+      <div class="metric"><span class="metric__value">4:41</span><span class="metric__label">Total time</span></div>
+    </div>
+    <div class="month"><h2>October</h2><span class="muted">9 runs</span></div>
+    <div class="run"><div><h3>Evening run</h3><p class="muted">Thu 8 Oct · 29:46・5'43"</p></div><div class="metric"><span class="metric__value">5.21<span class="metric__unit">km</span></span></div></div>
+    <div class="run"><div><h3>Riverside long run</h3><p class="muted">Sun 5 Oct · 1:08:12・6'04"</p></div><div class="metric"><span class="metric__value">11.23<span class="metric__unit">km</span></span></div></div>
+    <div class="run"><div><h3>Morning run</h3><p class="muted">Fri 3 Oct · 24:10・5'38"</p></div><div class="metric"><span class="metric__value">4.29<span class="metric__unit">km</span></span></div></div>
+    <div class="run"><div><h3>Intervals</h3><p class="muted">Wed 1 Oct · 32:55・5'12"</p></div><div class="metric"><span class="metric__value">6.33<span class="metric__unit">km</span></span></div></div>
+  </main>
+  <nav class="tabbar">
+    <a href="../run/start.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13" cy="4" r="2"/><path d="M7 21l3-6 3 2v5M10 15l1-6 4 3h4M6 11l3-2"/></svg>Run</a>
+    <a href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>History</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Me</a>
+  </nav>
+</div></body></html>

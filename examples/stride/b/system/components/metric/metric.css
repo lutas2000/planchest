@@ -1,0 +1,13 @@
+.metric { display: flex; flex-direction: column; gap: 2px; }
+.metric__value { font: 700 var(--text-xl) / 1.1 var(--font-num); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.metric__unit { font-size: var(--text-sm); font-weight: 500; margin-left: 2px; opacity: .7; }
+.metric__label { font-size: var(--text-xs); color: var(--color-muted); }
+.shell--run .metric__label { color: rgba(245,247,250,.6); }
+.metric--lg .metric__value { font-size: var(--text-hero); letter-spacing: -0.03em; }
+.metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+.metric__goal { font-size: var(--text-sm); opacity: .7; }
+.ring { position: relative; width: 260px; height: 260px; margin: 0 auto; display: grid; place-items: center; }
+.ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.ring .ring__track { stroke: rgba(255,255,255,.1); }
+.ring .ring__fill { stroke: var(--color-primary); }
