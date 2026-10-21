@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 22.18.0 and 23.6.0 are the oldest releases that strip types by default.
+        node: ["22.18.0", "23.6.0", "24", "lts/*"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - name: Run from the checkout
+        run: node bin/planchest.js diff examples/stride/a examples/stride/b --out "$RUNNER_TEMP/report-src"
+      - name: Run the packed package from node_modules
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          mkdir "$RUNNER_TEMP/install" && cd "$RUNNER_TEMP/install"
+          npm init -y
+          npm install "$RUNNER_TEMP"/planchest-*.tgz
+          npx planchest --version
+          npx planchest diff "$GITHUB_WORKSPACE/examples/stride/a" "$GITHUB_WORKSPACE/examples/stride/b" --out "$RUNNER_TEMP/report-dist"

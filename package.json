@@ -8,17 +8,19 @@
     "planchest": "./bin/planchest.js"
   },
   "files": [
-    "src",
+    "dist",
     "bin",
     "skills",
     "template"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit",
-    "test": "node --test \"tests/**/*.test.ts\""
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "prepack": "npm run build"
   },
   "engines": {
-    "node": ">=23.6"
+    "node": "^22.18.0 || >=23.6.0"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",

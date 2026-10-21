@@ -7,7 +7,7 @@ description: Produce a visual diff report of design pages between two git refs, 
 
 `planchest diff` renders two versions of the repo's pages side by side without spending tokens: it checks out refs into temporary worktrees (or takes directories as they are), lists which pages and `data-page` sections changed, copies both sides into a report directory, and writes `index.html` plus `report.json`. Your job is the part a script cannot do: say what changed and why it matters.
 
-The CLI is at `${CLAUDE_PLUGIN_ROOT}/bin/planchest.js` (run with `node`); if `planchest` is on PATH, use that.
+The CLI is at `${CLAUDE_PLUGIN_ROOT}/bin/planchest.js` (run with `node`); if `planchest` is on PATH, use that. It needs Node 22.18 or newer: run `node --version` first, and if it is older, stop and tell the user to install a current Node from nodejs.org or with a version manager (nvm, fnm, Volta), rather than working around it.
 
 ## Procedure
 

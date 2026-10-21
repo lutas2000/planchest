@@ -24,11 +24,15 @@ claude plugin marketplace add lutas2000/planchest
 claude plugin install planchest
 ```
 
-The CLI alone (Node 23.6 or newer; no build step, no dependencies):
+The skills run the `planchest` CLI with the `node` on your PATH, which must be Node 22.18 or newer (`node --version` to check). If it is older, install a current version from [nodejs.org](https://nodejs.org) or with a version manager such as nvm, fnm or Volta.
+
+The CLI alone, from a clone (same Node requirement, no dependencies):
 
 ```bash
-npx planchest --help
+node bin/planchest.js --help
 ```
+
+The CLI is not on npm yet.
 
 ## Use
 
@@ -98,7 +102,11 @@ npm test
 npm run check
 ```
 
-Source is TypeScript run directly by Node; `tsc` is only used for type checking.
+```bash
+npm run build
+```
+
+Source is TypeScript run directly by Node, so a clone needs no build step. `npm run build` compiles `src/` to `dist/` for the npm package, since Node does not strip types under `node_modules/`; `npm pack` and `npm publish` run it first. `bin/planchest.js` runs `src/` when it is there and `dist/` otherwise.
 
 ## License
 
