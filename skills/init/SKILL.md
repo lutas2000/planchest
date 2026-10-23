@@ -5,7 +5,9 @@ description: Create a new design repo from the Planchest template. Use when the 
 
 # Create a design repo
 
-The template lives at `${CLAUDE_PLUGIN_ROOT}/template`. Its structure and the reasoning behind it are described in `${CLAUDE_PLUGIN_ROOT}/docs/design-repo.md`; read that file if the user asks why something is laid out the way it is.
+The `planchest` CLI copies the template (`planchest init`) and prints the document that explains its structure and the reasoning behind it (`planchest docs design-repo`); read that document if the user asks why something is laid out the way it is.
+
+To run the `planchest` CLI, use the first of these that runs: `planchest` on PATH; `node "${CLAUDE_PLUGIN_ROOT}/bin/planchest.js"` when that variable is set (Claude Code); `node ../../bin/planchest.js`, resolved from this skill file's directory, when the skill sits in a Planchest checkout. Below, `planchest` means whichever one worked. It needs Node 22.18 or newer: run `node --version` first, and if it is older, stop and tell the user to install a current Node from nodejs.org or with a version manager (nvm, fnm, Volta), rather than working around it. If none of the three runs, stop and tell the user to put Planchest's `bin/planchest.js` on PATH; do not look for the files some other way.
 
 ## Ask first
 
@@ -19,7 +21,7 @@ Ask these together, in one message, and accept defaults when the user does not c
 
 ## Do
 
-1. Copy the template into the target directory (empty, or a fresh `git init`). Do not overwrite existing files; list any you skipped.
+1. Run `planchest init <target directory>` (empty, or a fresh `git init`). It copies the template and never overwrites a file that exists; list the ones it skipped.
 2. Apply the answers: create `products/<name>/` or platform directories, moving `concepts/` and `prototypes/` as needed; add agent entry files.
 3. Set the language under "Working language" in `AGENTS.md` (replace **English**).
 4. Replace `Product name` in `DESIGN.md` front matter with the real name. Leave the prose sections as comments for `organize` to fill.

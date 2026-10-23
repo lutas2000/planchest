@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { diff } from "./diff/index.ts";
 import { serve } from "./diff/serve.ts";
+import { DOCS, docNames, init } from "./init.ts";
 
 const DEFAULT_OUT = ".planchest/diff";
 const DEFAULT_PORT = 4747;
@@ -10,6 +11,8 @@ const DEFAULT_PORT = 4747;
 const HELP = `planchest — a design repo framework for AI agents
 
 Usage
+  planchest init [dir]               create a design repo from the template
+  planchest docs [name]              print a Planchest document (list them without a name)
   planchest diff <a> <b> [options]   compare two versions of design pages
   planchest serve [dir] [--port N]   serve a report directory
   planchest --version
@@ -93,6 +96,32 @@ async function main(argv: string[]) {
       );
     }
     if (values.serve) await serveDir(resolve(cwd, out), port);
+    return;
+  }
+
+  if (command === "init") {
+    const [dir, extra] = rest;
+    if (extra) fail(`unexpected argument "${extra}"`);
+    const target = resolve(cwd, dir ?? ".");
+    const { created, skipped } = init(target);
+    process.stdout.write(
+      `${target}\ncreated: ${created.length} files\n` +
+        (skipped.length ? `skipped, already there:\n${skipped.map((f) => `  ${f}\n`).join("")}` : ""),
+    );
+    return;
+  }
+
+  if (command === "docs") {
+    const [name, extra] = rest;
+    if (extra) fail(`unexpected argument "${extra}"`);
+    const names = docNames();
+    if (!name) {
+      process.stdout.write(names.map((n) => n + "\n").join(""));
+      return;
+    }
+    const doc = name.replace(/\.md$/, "");
+    if (!names.includes(doc)) fail(`no document "${name}"; available: ${names.join(", ")}`);
+    process.stdout.write(readFileSync(resolve(DOCS, doc + ".md"), "utf8"));
     return;
   }
 

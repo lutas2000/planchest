@@ -5,7 +5,7 @@ description: Gather scattered design material (brand guides, Figma exports, styl
 
 # Organize design material into the repo
 
-The repo's layout and rules are in its `AGENTS.md`; the reasoning is in `${CLAUDE_PLUGIN_ROOT}/docs/design-repo.md`. The job here is to turn whatever the user has into the places an agent reads before designing: `DESIGN.md`, `CONTEXT.md`, `BRAND.md`, `system/`, and, when the material shows screens, `flows/sitemap.html`.
+The repo's layout and rules are in its `AGENTS.md`; the reasoning is in Planchest's design repo document (`planchest docs design-repo`; to find the CLI, use `planchest` on PATH, else `node "${CLAUDE_PLUGIN_ROOT}/bin/planchest.js"`, else `node ../../bin/planchest.js` resolved from this skill file's directory). The job here is to turn whatever the user has into the places an agent reads before designing: `DESIGN.md`, `CONTEXT.md`, `BRAND.md`, `system/`, and, when the material shows screens, `flows/sitemap.html`.
 
 ## Procedure
 

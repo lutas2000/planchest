@@ -31,3 +31,6 @@ jobs:
           npm install "$RUNNER_TEMP"/planchest-*.tgz
           npx planchest --version
           npx planchest diff "$GITHUB_WORKSPACE/examples/stride/a" "$GITHUB_WORKSPACE/examples/stride/b" --out "$RUNNER_TEMP/report-dist"
+          npx planchest init "$RUNNER_TEMP/design-repo"
+          test -f "$RUNNER_TEMP/design-repo/.gitignore"
+          npx planchest docs design-repo > /dev/null

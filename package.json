@@ -10,6 +10,7 @@
   "files": [
     "dist",
     "bin",
+    "docs/design-repo.md",
     "skills",
     "template"
   ],
