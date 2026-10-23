@@ -7,8 +7,8 @@ Named after the plan chest: the wide, shallow-drawered cabinet where architects 
 ## What it is
 
 - **A repo layout** for design work done by agents: `DESIGN.md` (Stitch format) as the single source of visual truth, `CONTEXT.md` and `BRAND.md` for everything that is not a token, `system/` for materials, `concepts/` for free exploration, `prototypes/` for strict, developer-ready screens, `decisions/` for the decisions that outlive a pull request. Everything is self-contained HTML plus Markdown. See [docs/design-repo.md](docs/design-repo.md).
-- **Skills** that set up and work inside that repo: `init`, `organize`, `interview`, `concept`, `prototype`, `review`, `diff`, `conflict`.
-- **A diff tool**, `planchest diff`, that renders two versions of the pages side by side (or swipe, or onionskin) at any viewport, without spending a token. Two sides can be git refs, `ref:path`, or plain directories, so "main vs. this branch" and "dashboard-v1 vs. dashboard-v2" are the same command. The `diff` skill adds the human summary.
+- **Skills** that set up and work inside that repo: `planchest-init`, `planchest-organize`, `planchest-interview`, `planchest-concept`, `planchest-prototype`, `planchest-review`, `planchest-diff`, `planchest-conflict`.
+- **A diff tool**, `planchest diff`, that renders two versions of the pages side by side (or swipe, or onionskin) at any viewport, without spending a token. Two sides can be git refs, `ref:path`, or plain directories, so "main vs. this branch" and "dashboard-v1 vs. dashboard-v2" are the same command. The `planchest-diff` skill adds the human summary.
 
 Planchest does not depend on any design tool or canvas. Any agent that reads `AGENTS.md` can work in a Planchest repo. The skills ship as a Claude Code plugin and also work in other agents that load skills (see [Use with other agents](#use-with-other-agents)).
 
@@ -38,28 +38,28 @@ The CLI is not on npm yet.
 
 The skills find everything they need through the `planchest` CLI: `planchest init` copies the template, `planchest docs design-repo` prints the reasoning behind it, `planchest diff` renders the report. They look for the CLI in this order: `planchest` on PATH; `${CLAUDE_PLUGIN_ROOT}/bin/planchest.js` inside Claude Code; `../../bin/planchest.js` next to the skill file. So in Cursor, Codex or a cloud agent, put the CLI on PATH (for example `npm link` in a clone of this repo), then copy or symlink `skills/` into the agent's skills directory. An agent that loads the skills straight from a clone needs nothing on PATH.
 
-Skill names (`init`, `review`, `diff`, …) are short because Claude Code namespaces them as `/planchest:<name>`; in a shared skills directory, check that they do not collide with skills you already have.
+Every skill name starts with `planchest-`, so the skills do not collide with others in a shared skills directory. Claude Code adds the plugin's own namespace on top, which is why the commands read `/planchest:planchest-<name>`.
 
 ## Use
 
 Start a design repo:
 
 ```
-/planchest:init
+/planchest:planchest-init
 ```
 
-Bring in what you have (brand guide, Figma export, screenshots, a live product). With nothing to work from, `organize` stops and asks for material; `interview` builds the brand, design system or context by asking you questions instead:
+Bring in what you have (brand guide, Figma export, screenshots, a live product). With nothing to work from, `planchest-organize` stops and asks for material; `planchest-interview` builds the brand, design system or context by asking you questions instead:
 
 ```
-/planchest:organize
-/planchest:interview design
+/planchest:planchest-organize
+/planchest:planchest-interview design
 ```
 
 Explore, then build:
 
 ```
-/planchest:concept   → concepts/<name>/index.html, free form, several screens in one file
-/planchest:prototype → prototypes/<flow>/<step>.html, strictly from system/
+/planchest:planchest-concept   → concepts/<name>/index.html, free form, several screens in one file
+/planchest:planchest-prototype → prototypes/<flow>/<step>.html, strictly from system/
 ```
 
 Review a change visually:
@@ -72,13 +72,13 @@ planchest diff main HEAD --paths prototypes/onboarding --serve
 planchest diff concepts/dashboard-v1 concepts/dashboard-v2 --serve
 ```
 
-When two sources disagree, or a merge stops on conflicts in the design repo, `conflict` walks through them one at a time, showing both versions as a diff or as rendered pages:
+When two sources disagree, or a merge stops on conflicts in the design repo, `planchest-conflict` walks through them one at a time, showing both versions as a diff or as rendered pages:
 
 ```
-/planchest:conflict
+/planchest:planchest-conflict
 ```
 
-The report (`.planchest/diff/index.html`, git-ignored) has three panels: the changed, added and removed pages and `data-page` sections on the left; both sides of the selected page in the centre, with side-by-side, swipe and onionskin modes, viewport presets, zoom and scroll sync; and on the right `summary.html` from the same directory, which the `diff` skill writes. The side panels can be hidden. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR.
+The report (`.planchest/diff/index.html`, git-ignored) has three panels: the changed, added and removed pages and `data-page` sections on the left; both sides of the selected page in the centre, with side-by-side, swipe and onionskin modes, viewport presets, zoom and scroll sync; and on the right `summary.html` from the same directory, which the `planchest-diff` skill writes. The side panels can be hidden. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR.
 
 ## Example
 
@@ -92,7 +92,7 @@ node bin/planchest.js diff examples/stride/a examples/stride/b --serve
 
 ## Status
 
-Version 0.1: the repo layout, the eight skills, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `review` checklist, and token generation from `DESIGN.md`.
+Version 0.1: the repo layout, the eight skills, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
 
 ## Develop
 

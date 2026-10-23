@@ -1,6 +1,6 @@
 # 0001. Names
 
-status: accepted
+status: accepted; skill names amended by 0002
 date: 2026-10-08
 
 ## Context
@@ -19,7 +19,7 @@ Planchest introduces a handful of names that users, agents and tools all have to
 | `BRAND.md` | `PRODUCT.md` | Audience and positioning belong in `CONTEXT.md`; personality is already in the `DESIGN.md` Overview. What was missing is the logo, voice and copy rules, and that is brand. |
 | `decisions/` | `adr/` | The repo is read by designers. "ADR" is an engineering abbreviation; "decisions" says the same thing to everyone. The record format (Context, Decision, Consequences, status, supersedes) stays. |
 | skill `prototype` | `promote-to-ui` | A prototype is not the same file upgraded; it is reimplemented from the concept. `concept` and `prototype` are symmetric names, one per directory. |
-| skill `review` | `design-review` | The plugin prefix is already `planchest`; no need to repeat the domain. |
+| skill `review` | `design-review` | The plugin prefix is already `planchest`; no need to repeat the domain. Superseded by 0002: skills are now named `planchest-<name>`. |
 | skill `organize` | `intake`, `gather` | Organize also covers every round after the first; intake only covers the first. |
 | `flows/sitemap.html` | `MAP.md`, `screens.md` | A sitemap is what designers call the map of a product's screens. HTML rather than Markdown so the diff report renders it and a reorganised navigation shows as a visual diff. |
 | skill `interview` | `wizard`, `questionnaire`, `setup` | A conversation that gets what is in someone's head into the repo. "Wizard" is a UI word; "setup" is what `init` does. |

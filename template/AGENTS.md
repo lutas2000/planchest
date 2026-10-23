@@ -10,12 +10,12 @@ Write in **English**: `SPEC.md`, `FLOW.md`, decisions, diff summaries, PR descri
 
 | Path | What it is | Who writes it |
 |---|---|---|
-| `DESIGN.md` | The visual system (Stitch format). Single source of truth for tokens and visual rules. | Agents, via the `organize` skill, after a PR |
+| `DESIGN.md` | The visual system (Stitch format). Single source of truth for tokens and visual rules. | Agents, via the `planchest-organize` skill, after a PR |
 | `CONTEXT.md` | Domain vocabulary, audience, roles, forbidden words | Agents and people |
 | `BRAND.md` | Logo usage, voice and tone, copy rules, naming | Agents and people |
 | `system/` | Materials: tokens, components, patterns, icons, brand assets | Only through `system/`-level PRs |
-| `concepts/` | Quick, unconstrained explorations for discussion | Agents, via the `concept` skill |
-| `prototypes/` | Rigorous, realistic, developer-ready screens | Agents, via the `prototype` skill |
+| `concepts/` | Quick, unconstrained explorations for discussion | Agents, via the `planchest-concept` skill |
+| `prototypes/` | Rigorous, realistic, developer-ready screens | Agents, via the `planchest-prototype` skill |
 | `flows/` | Cross-platform user journeys every prototype maps back to; `flows/sitemap.html` maps every screen | Agents and people |
 | `decisions/` | Decisions lifted out of PR discussions so they are not relitigated | People, or agents when asked |
 
