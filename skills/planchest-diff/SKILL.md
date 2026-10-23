@@ -1,5 +1,5 @@
 ---
-name: diff
+name: planchest-diff
 description: Produce a visual diff report of design pages between two git refs, branches, or directories using the planchest CLI, then write the human summary that goes with it. Use when a design PR needs a review page, when the user wants to compare two versions or two variants of a design, or asks what changed visually.
 ---
 

@@ -34,7 +34,7 @@ status: approved
 
 ## sitemap.html
 
-The map of the product's screens: one self-contained page, written by the `organize` skill when the material shows more than one screen, and kept current by `prototype` when screens are added, removed or renamed. It is the one page in the repo that is about the product rather than part of it. The diff report shows it like any other page, so a reorganised navigation is visible as a visual diff.
+The map of the product's screens: one self-contained page, written by the `planchest-organize` skill when the material shows more than one screen, and kept current by `planchest-prototype` when screens are added, removed or renamed. It is the one page in the repo that is about the product rather than part of it. The diff report shows it like any other page, so a reorganised navigation is visible as a visual diff.
 
 - One `<ul>` tree. One `<li>` per screen or group, nested the way the navigation is, in navigation order.
 - A screen that exists in the repo is a link with a relative path: `../prototypes/run/start.html`, or `../concepts/home/index.html#today` for a concept section. A screen that does not exist yet is plain text.

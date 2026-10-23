@@ -10,7 +10,7 @@ This document describes what a repository looks like, and which rules it keeps, 
 - **Materials and artifacts are kept apart.** `system/` is material (tokens, components, patterns); `concepts/` and `prototypes/` are artifacts. A prototype may only reference material and may not invent colours or components. A concept is exempt (next section).
 - **Every page is self-contained HTML that opens from a static server at the repo root.** No build step, no external CDN; every asset is referenced by a relative path to a file inside the repo. This is what lets the diff tool put any two versions side by side.
 - **Every artifact directory has a `SPEC.md`.** HTML can only say what something looks like; `SPEC.md` records why, so the next agent has the context. It starts with a `status:` field (`draft` / `review` / `approved` / `archived`), which replaces directory levels as the way to express maturity.
-- **Review happens in pull requests.** Every new concept and every prototype change is a PR. The PR carries the diff report Planchest generates; the `review` checklist runs in CI (a `planchest check` command for its mechanical steps is planned); rejections stay in the PR discussion. Only decisions that outlive the PR are lifted into `decisions/`.
+- **Review happens in pull requests.** Every new concept and every prototype change is a PR. The PR carries the diff report Planchest generates; the `planchest-review` checklist runs in CI (a `planchest check` command for its mechanical steps is planned); rejections stay in the PR discussion. Only decisions that outlive the PR are lifted into `decisions/`.
 
 ## Two tiers of artifacts (hard rules, written into `AGENTS.md`)
 
@@ -21,7 +21,7 @@ This document describes what a repository looks like, and which rules it keeps, 
 
 When a concept's `index.html` holds several pages, each one is wrapped in a `<section data-page="<id>">` with a kebab-case `id`. The diff tool uses this attribute to compare pages separately and to build the page list.
 
-Going from concept to prototype is not "upgrading" the same file. A compliant prototype is implemented afresh, with the concept as its reference. Planchest's `prototype` skill does this with a checklist and records in the prototype's `SPEC.md` which concept it came from.
+Going from concept to prototype is not "upgrading" the same file. A compliant prototype is implemented afresh, with the concept as its reference. The `planchest-prototype` skill does this with a checklist and records in the prototype's `SPEC.md` which concept it came from.
 
 ## Single product
 
@@ -143,14 +143,14 @@ xx-product-line/
 
 ## What Planchest relies on
 
-Planchest's tools require nothing to be installed in the repo. They depend only on the points below, all of which are part of the conventions above. `template/` is the empty shell of this tree, and the `init` skill starts from it:
+Planchest's tools require nothing to be installed in the repo. They depend only on the points below, all of which are part of the conventions above. `template/` is the empty shell of this tree, and the `planchest-init` skill starts from it:
 
 - Pages open directly from a static server at the repo root (the diff tool mounts both versions under one server and shows them in iframes side by side).
 - A concept's multi-page `index.html` is split into pages with `<section data-page>`.
 - `system/components/*/examples.html` exists and serves as the visual-regression baseline.
 - Prototypes reference only `system/tokens/tokens.css` and what is in `system/components/` and `system/patterns/`. The compliance check scans for hard-coded colours and unregistered components on that basis.
 - Every artifact directory has a `SPEC.md` that starts with `status:`; the diff report uses it to label each page's maturity.
-- Platform directories (`web/`, `mobile/`) are optional. A product with one platform may keep `concepts/` and `prototypes/` at the product root; the `init` skill asks, and a platform directory can be added later by moving those two directories into it. The tools do not assume a platform level exists.
+- Platform directories (`web/`, `mobile/`) are optional. A product with one platform may keep `concepts/` and `prototypes/` at the product root; the `planchest-init` skill asks, and a platform directory can be added later by moving those two directories into it. The tools do not assume a platform level exists.
 
 ## References
 

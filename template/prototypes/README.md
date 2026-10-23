@@ -26,7 +26,7 @@ status: draft
 ## Acceptance
 
 - [ ] Every state in the flow's edge cases has a screen or a documented reason not to.
-- [ ] Passes the `review` checklist.
+- [ ] Passes the `planchest-review` checklist.
 
 ## Decisions
 

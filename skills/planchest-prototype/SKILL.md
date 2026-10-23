@@ -1,5 +1,5 @@
 ---
-name: prototype
+name: planchest-prototype
 description: Build or revise a rigorous, developer-ready prototype in the design repo's prototypes/ directory, strictly from the design system. Use when a concept has been adopted, when the user asks for a real screen, a handoff-quality design, or a change to an existing prototype.
 ---
 
@@ -19,8 +19,8 @@ A prototype is the deliverable. Everything in it must come from `system/`; every
 4. **One file per screen.** `prototypes/<flow>/<step>.html`. No `data-page` sections here; sections are for concepts.
    If `flows/sitemap.html` exists, add, move or rename the screen's entry there in the same commit.
 5. **Write `SPEC.md`** from the template in `prototypes/README.md`: flow, source concept, screen table, acceptance checklist, decisions. Set `status: draft`; a reviewer moves it to `review`, then `approved`.
-6. **Review yourself** with the `review` skill before opening the PR, and fix what it finds.
-7. **Open a PR** with a Planchest diff (`diff` skill) against the base branch, scoped to the prototype directory. For a revision, the diff shows exactly which screens moved.
+6. **Review yourself** with the `planchest-review` skill before opening the PR, and fix what it finds.
+7. **Open a PR** with a Planchest diff (`planchest-diff` skill) against the base branch, scoped to the prototype directory. For a revision, the diff shows exactly which screens moved.
 8. **When approved,** write `HANDOFF.md` and archive the source concept if it is still in `concepts/`.
 
 ## Don't

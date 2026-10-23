@@ -22,5 +22,5 @@ Link the component stylesheet with a relative path and copy its markup verbatim,
 
 1. Create the directory with all five files. `examples.html` must show every variant and state, including focus, disabled, loading and error.
 2. Add a row to `INDEX.md` with status `beta`.
-3. Open a PR. The PR must include a Planchest diff of `system/components/` and pass the `review` checklist.
+3. Open a PR. The PR must include a Planchest diff of `system/components/` and pass the `planchest-review` checklist.
 4. Promote to `stable` after it has been used by two prototypes without changes.

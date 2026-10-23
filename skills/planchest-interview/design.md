@@ -59,4 +59,4 @@ Writes `DESIGN.md` (front matter and sections) and then derives `system/tokens/`
 
 → Do's and Don'ts.
 
-After the confirmation: derive `tokens.json` and `tokens.css` (step 3 of `organize`) and update `system/components/button/` to the chosen height, radius and colours, since the template's button is the one component every prototype starts from.
+After the confirmation: derive `tokens.json` and `tokens.css` (step 3 of `planchest-organize`) and update `system/components/button/` to the chosen height, radius and colours, since the template's button is the one component every prototype starts from.

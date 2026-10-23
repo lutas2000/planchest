@@ -1,5 +1,5 @@
 ---
-name: review
+name: planchest-review
 description: Check a design repo change against its rules — token compliance, component and pattern use, SPEC.md completeness, accessibility and responsiveness — and report findings. Use before opening a PR, when reviewing a PR in a design repo, or when the user asks whether a prototype follows the design system.
 ---
 
