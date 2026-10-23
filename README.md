@@ -10,7 +10,7 @@ Named after the plan chest: the wide, shallow-drawered cabinet where architects 
 - **Skills** that set up and work inside that repo: `init`, `organize`, `interview`, `concept`, `prototype`, `review`, `diff`, `conflict`.
 - **A diff tool**, `planchest diff`, that renders two versions of the pages side by side (or swipe, or onionskin) at any viewport, without spending a token. Two sides can be git refs, `ref:path`, or plain directories, so "main vs. this branch" and "dashboard-v1 vs. dashboard-v2" are the same command. The `diff` skill adds the human summary.
 
-Planchest does not depend on any design tool or canvas. Any agent that reads `AGENTS.md` can work in a Planchest repo; the skills are written for Claude Code.
+Planchest does not depend on any design tool or canvas. Any agent that reads `AGENTS.md` can work in a Planchest repo. The skills ship as a Claude Code plugin and also work in other agents that load skills (see [Use with other agents](#use-with-other-agents)).
 
 ## Install
 
@@ -33,6 +33,12 @@ node bin/planchest.js --help
 ```
 
 The CLI is not on npm yet.
+
+### Use with other agents
+
+The skills find everything they need through the `planchest` CLI: `planchest init` copies the template, `planchest docs design-repo` prints the reasoning behind it, `planchest diff` renders the report. They look for the CLI in this order: `planchest` on PATH; `${CLAUDE_PLUGIN_ROOT}/bin/planchest.js` inside Claude Code; `../../bin/planchest.js` next to the skill file. So in Cursor, Codex or a cloud agent, put the CLI on PATH (for example `npm link` in a clone of this repo), then copy or symlink `skills/` into the agent's skills directory. An agent that loads the skills straight from a clone needs nothing on PATH.
+
+Skill names (`init`, `review`, `diff`, …) are short because Claude Code namespaces them as `/planchest:<name>`; in a shared skills directory, check that they do not collide with skills you already have.
 
 ## Use
 
