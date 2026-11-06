@@ -9,6 +9,8 @@ description: Produce a visual diff report of design pages between two git refs, 
 
 To run the `planchest` CLI, use the first of these that runs: `planchest` on PATH; `node "${CLAUDE_PLUGIN_ROOT}/bin/planchest.js"` when that variable is set (Claude Code); `node ../../bin/planchest.js`, resolved from this skill file's directory, when the skill sits in a Planchest checkout. Below, `planchest` means whichever one worked. It needs Node 22.18 or newer: run `node --version` first, and if it is older, stop and tell the user to install a current Node from nodejs.org or with a version manager (nvm, fnm, Volta), rather than working around it. If none of the three runs, stop and tell the user to put Planchest's `bin/planchest.js` on PATH; do not look for the files some other way.
 
+For browsing a single current design repository without comparison, use `planchest-view`. Viewer and Diff have separate output directories and URL hash formats.
+
 ## Procedure
 
 1. **Pick the two sides.** Each side is a directory, a ref, or `<ref>:<path>`:

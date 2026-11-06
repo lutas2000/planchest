@@ -3,10 +3,12 @@ import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { diff } from "./diff/index.ts";
 import { serve } from "./diff/serve.ts";
+import { publishViewer } from "./viewer/index.ts";
 import { DOCS, docNames, init } from "./init.ts";
 
 const DEFAULT_OUT = ".planchest/diff";
 const DEFAULT_PORT = 4747;
+const DEFAULT_VIEWER_OUT = ".planchest/viewer";
 
 const HELP = `planchest — a design repo framework for AI agents
 
@@ -14,6 +16,7 @@ Usage
   planchest init [dir]               create a design repo from the template
   planchest docs [name]              print a Planchest document (list them without a name)
   planchest diff <a> <b> [options]   compare two versions of design pages
+  planchest view [dir] [--build]    browse a design repo (or export with --build)
   planchest serve [dir] [--port N]   serve a report directory
   planchest --version
 
@@ -55,6 +58,7 @@ async function main(argv: string[]) {
       serve: { type: "boolean" },
       port: { type: "string" },
       json: { type: "boolean" },
+      build: { type: "boolean" },
     },
   });
 
@@ -96,6 +100,22 @@ async function main(argv: string[]) {
       );
     }
     if (values.serve) await serveDir(resolve(cwd, out), port);
+    return;
+  }
+
+  if (command === "view") {
+    const [dir, extra] = rest;
+    if (extra) fail(`unexpected argument "${extra}"`);
+    const root = resolve(cwd, dir ?? ".");
+    const out = resolve(cwd, values.out ?? DEFAULT_VIEWER_OUT);
+    let catalog;
+    try {
+      catalog = publishViewer(root, out);
+    } catch (err) {
+      fail(err instanceof Error ? err.message : String(err));
+    }
+    process.stdout.write(`Viewer: ${out}/index.html (${catalog.entries.length} entries)\n`);
+    if (!values.build) await serveDir(out, port);
     return;
   }
 
