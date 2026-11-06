@@ -1,6 +1,6 @@
 # Prototypes
 
-Rigorous, realistic, developer-ready screens. One directory per flow or feature; one HTML file per screen; `data.json` for fake data; `SPEC.md`; `HANDOFF.md` once approved.
+Rigorous, realistic, developer-ready screens. One directory per flow or feature; one HTML file per screen; `data.json` for fake data; `SPEC.md`; `HANDOFF.md` with every delivery. Prototypes are developer-ready by definition and have no `status` field. PR review still applies.
 
 - Only `system/tokens/tokens.css` custom properties, components in `system/components/INDEX.md` and patterns in `system/patterns/INDEX.md`.
 - Copy follows `BRAND.md`; vocabulary follows `CONTEXT.md`.
@@ -9,8 +9,6 @@ Rigorous, realistic, developer-ready screens. One directory per flow or feature;
 ## SPEC.md
 
 ```markdown
-status: draft
-
 # Onboarding
 
 **Flow:** flows/onboarding
@@ -35,4 +33,4 @@ Things decided while building this, with a PR link. Durable ones move to `decisi
 
 ## HANDOFF.md
 
-Written when `status: approved`. Interaction details, exact copy, motion, boundary conditions, and anything a developer would otherwise have to guess.
+Written and kept current alongside the screens and `SPEC.md`. Interaction details, exact copy, motion, boundary conditions, and anything a developer would otherwise have to guess.

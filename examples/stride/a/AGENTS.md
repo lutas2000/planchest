@@ -11,5 +11,5 @@ Write in **English**: `SPEC.md`, `FLOW.md`, decisions, diff summaries, PR descri
 - `DESIGN.md` is the single source of visual truth. `system/tokens/tokens.css` is derived from it.
 - `concepts/` is free exploration. `prototypes/` uses only `system/` and copy that follows `BRAND.md`.
 - Every page is self-contained HTML at phone width (390 px design width) and opens from a static server at the repo root.
-- Every artifact directory has a `SPEC.md` starting with `status:`.
+- Every artifact directory has a `SPEC.md`. Concepts start with `status:`; prototypes are developer-ready and have no status field.
 - Each prototype page maps back to a step in `flows/`.

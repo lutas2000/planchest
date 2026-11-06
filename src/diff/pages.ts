@@ -21,7 +21,7 @@ export interface Page {
   hash: string;
   /** `data-page` sections, in document order. Empty for single-screen pages. */
   sections: Section[];
-  /** `status:` from the SPEC.md next to the page, if any. */
+  /** `status:` from the adjacent SPEC.md, except for prototypes. */
   status?: string;
   /** `<title>` text, if any. */
   title?: string;
@@ -98,7 +98,7 @@ export function snapshot(root: string): Snapshot {
         file,
         hash: sha(html),
         sections: extractSections(html),
-        status: specStatus(dirname(abs)),
+        status: file.split("/").includes("prototypes") ? undefined : specStatus(dirname(abs)),
         title,
       });
     } else {

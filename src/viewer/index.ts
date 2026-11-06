@@ -155,7 +155,9 @@ export function buildCatalog(
           : [".html", ".htm"].includes(ext)
             ? "html"
             : "image",
-      status: /^status:\s*([^\s#]+)/m.exec(meta)?.[1],
+      status: file.split("/").includes("prototypes")
+        ? undefined
+        : /^status:\s*([^\s#]+)/m.exec(meta)?.[1],
       spec: available.has(spec) && spec !== file ? spec : undefined,
     });
   }

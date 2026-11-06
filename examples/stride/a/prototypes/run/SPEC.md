@@ -1,5 +1,3 @@
-status: review
-
 # Record a run
 
 Flow: `flows/run/FLOW.md`. Source concept: none (carried over from the 0.x app).

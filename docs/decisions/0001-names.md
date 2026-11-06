@@ -15,7 +15,7 @@ Planchest introduces a handful of names that users, agents and tools all have to
 | `docs/design-repo.md` | `design-architecture.md` | The document describes what a design repo looks like and which rules it keeps. "Architecture" reads as system architecture. |
 | `template/` | `scaffold/` | `init` copies a template. A scaffold is something you take down afterwards. |
 | `concepts/` | `poc/`, `wireframes/` | "PoC" is an engineering word. "Wireframe" means low fidelity, but fidelity is free when an agent draws; the real line is whether the design system binds the work. |
-| `prototypes/` | `prototypes/` + `ui/` | Two tiers are enough. Maturity is the `status` field in `SPEC.md`, not a directory level. |
+| `prototypes/` | `prototypes/` + `ui/` | Two tiers are enough. Concept maturity is the `status` field in `SPEC.md`. Prototypes are developer-ready by definition and have no status lifecycle (clarified 2026-11-06). |
 | `BRAND.md` | `PRODUCT.md` | Audience and positioning belong in `CONTEXT.md`; personality is already in the `DESIGN.md` Overview. What was missing is the logo, voice and copy rules, and that is brand. |
 | `decisions/` | `adr/` | The repo is read by designers. "ADR" is an engineering abbreviation; "decisions" says the same thing to everyone. The record format (Context, Decision, Consequences, status, supersedes) stays. |
 | skill `prototype` | `promote-to-ui` | A prototype is not the same file upgraded; it is reimplemented from the concept. `concept` and `prototype` are symmetric names, one per directory. |

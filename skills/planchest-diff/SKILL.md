@@ -18,7 +18,7 @@ For browsing a single current design repository without comparison, use `planche
    - two variants: `planchest diff concepts/dashboard-v1 concepts/dashboard-v2`
    - history: `planchest diff v1.0:prototypes/checkout HEAD:prototypes/checkout`
    Run it from the design repo. The report goes to `.planchest/diff/` (git-ignored) unless `--out` says otherwise.
-2. **Read `report.json`.** `comparison.pages[]` has `change` per page and per section, and `status` (from `SPEC.md`) on both sides. `comparison.files[]` lists non-page files that differ (specs, tokens, data). Use `git diff <a> <b> -- <file>` on those to learn what changed in the specs and tokens.
+2. **Read `report.json`.** `comparison.pages[]` has `change` per page and per section, and `status` (from `SPEC.md`) on both sides for artifacts other than prototypes. Prototypes have no status lifecycle; legacy prototype statuses are ignored. `comparison.files[]` lists non-page files that differ (specs, tokens, data). Use `git diff <a> <b> -- <file>` on those to learn what changed in the specs and tokens.
 3. **Look at the changed pages.** Serve the report (`planchest serve`, or `--serve` on the diff) and open it in the browser; or read the two HTML files directly. Note what moved, what was added, what state or copy changed, and whether `system/` material changed underneath the pages (a token change moves every page).
 4. **Write `summary.html`** into the report directory. The report page shows it at the top. Plain HTML, no styles of its own, under ~300 words:
 
@@ -40,7 +40,7 @@ For browsing a single current design repository without comparison, use `planche
 
 ## Reading the report page
 
-Three panels in a row. **Left, the files**: changed, added and removed pages (and their `data-page` sections), unchanged pages collapsed, then other changed files. **Centre, the preview**: both sides of the selected page, side by side, swipe (drag the split) or onionskin (overlay with opacity); viewport presets 375 / 768 / 1280 or any width and height; scroll sync. **Right, the summary**: `summary.html`, or a note that none has been written. The Files and Summary buttons in the header hide and show the side panels, so the preview can take the whole window. The zoom buttons (50 / 75 / 100 %, or any percentage) scale the preview without changing the viewport the pages render at; Fit picks the zoom at which both sides fit the window. The status badge is the `SPEC.md` status on side B.
+Three panels in a row. **Left, the files**: changed, added and removed pages (and their `data-page` sections), unchanged pages collapsed, then other changed files. **Centre, the preview**: both sides of the selected page, side by side, swipe (drag the split) or onionskin (overlay with opacity); viewport presets 375 / 768 / 1280 or any width and height; scroll sync. **Right, the summary**: `summary.html`, or a note that none has been written. The Files and Summary buttons in the header hide and show the side panels, so the preview can take the whole window. The zoom buttons (50 / 75 / 100 %, or any percentage) scale the preview without changing the viewport the pages render at; Fit picks the zoom at which both sides fit the window. The status badge is the `SPEC.md` status on side B; prototypes have no status badge.
 
 ## Don't
 
