@@ -7,6 +7,8 @@ description: Check a design repo change against its rules — token compliance, 
 
 This is the checklist `AGENTS.md` refers to. Run it over the files that changed (the PR's diff, or `git diff --name-only <base>`). Until `planchest check` exists, do the mechanical steps with grep and the judgement steps by reading. Report findings as a list; each item names the file and line, the rule, and the fix.
 
+For browsing the current design library and reading adjacent specifications, use `planchest-view`. Use `planchest-diff` when the review needs before/after evidence. The Viewer is a snapshot: regenerate it after fixes.
+
 ## Mechanical checks (prototypes and system only; concepts are exempt)
 
 1. **Hard-coded values.** In `prototypes/**` and `system/components/**`, `system/patterns/**`:

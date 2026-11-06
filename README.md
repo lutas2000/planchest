@@ -7,7 +7,7 @@ Named after the plan chest: the wide, shallow-drawered cabinet where architects 
 ## What it is
 
 - **A repo layout** for design work done by agents: `DESIGN.md` (Stitch format) as the single source of visual truth, `CONTEXT.md` and `BRAND.md` for everything that is not a token, `system/` for materials, `concepts/` for free exploration, `prototypes/` for strict, developer-ready screens, `decisions/` for the decisions that outlive a pull request. Everything is self-contained HTML plus Markdown. See [docs/design-repo.md](docs/design-repo.md).
-- **Skills** that set up and work inside that repo: `planchest-init`, `planchest-organize`, `planchest-interview`, `planchest-concept`, `planchest-prototype`, `planchest-review`, `planchest-diff`, `planchest-conflict`.
+- **Skills** that set up and work inside that repo: `planchest-init`, `planchest-organize`, `planchest-interview`, `planchest-concept`, `planchest-prototype`, `planchest-review`, `planchest-diff`, `planchest-conflict`, `planchest-view`.
 - **A diff tool**, `planchest diff`, that renders two versions of the pages side by side (or swipe, or onionskin) at any viewport, without spending a token. Two sides can be git refs, `ref:path`, or plain directories, so "main vs. this branch" and "dashboard-v1 vs. dashboard-v2" are the same command. The `planchest-diff` skill adds the human summary.
 
 Planchest does not depend on any design tool or canvas. Any agent that reads `AGENTS.md` can work in a Planchest repo. The skills ship as a Claude Code plugin and also work in other agents that load skills (see [Use with other agents](#use-with-other-agents)).
@@ -92,7 +92,7 @@ node bin/planchest.js diff examples/stride/a examples/stride/b --serve
 
 ## Status
 
-Version 0.1: the repo layout, the eight skills, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
+Version 0.1: the repo layout, the nine skills, `planchest view` for browsing current design material, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
 
 ## Develop
 
@@ -112,8 +112,21 @@ npm run check
 npm run build
 ```
 
-Source is TypeScript run directly by Node, so a clone needs no build step. `npm run build` compiles `src/` to `dist/` for the npm package, since Node does not strip types under `node_modules/`; `npm pack` and `npm publish` run it first. `bin/planchest.js` runs `src/` when it is there and `dist/` otherwise.
+CLI source is TypeScript run directly by Node; the Viewer browser assets require `npm run build:viewer` before first use from a clone. `npm run build` compiles `src/` to `dist/` for the npm package, since Node does not strip types under `node_modules/`; `npm pack` and `npm publish` run it first. `bin/planchest.js` runs `src/` when it is there and `dist/` otherwise.
 
 ## License
 
 Apache-2.0
+
+## Viewer
+
+Browse a design repository with search, HTML viewport previews, Markdown documents and adjacent specifications. The `planchest-view` skill guides agents through browsing and export:
+
+```bash
+npm run build
+node bin/planchest.js view examples/stride/a
+```
+
+`planchest view [dir]` generates a snapshot in `.planchest/viewer` and serves it on loopback. Use `--port` to choose a port, `--out` to choose an output directory, or `--build` to export without starting the server. The output can be hosted as a static directory, including under a URL subpath. Rerun the command after changing repository files.
+
+The Viewer uses an isolated iframe for HTML previews. Open the original page when a prototype needs origin storage or fetch access. The shell is built with React and Tailwind; design repositories continue to use plain HTML and Markdown.
