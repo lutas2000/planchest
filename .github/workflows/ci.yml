@@ -22,7 +22,9 @@ jobs:
       - run: npm run check
       - run: npm test
       - name: Run from the checkout
-        run: node bin/planchest.js diff examples/stride/a examples/stride/b --out "$RUNNER_TEMP/report-src"
+        run: |
+          node bin/planchest.js diff examples/stride/a examples/stride/b --out "$RUNNER_TEMP/report-src"
+          node bin/planchest.js view examples/stride/a --build --out "$RUNNER_TEMP/viewer-src"
       - name: Run the packed package from node_modules
         run: |
           npm pack --pack-destination "$RUNNER_TEMP"
@@ -34,3 +36,5 @@ jobs:
           npx planchest init "$RUNNER_TEMP/design-repo"
           test -f "$RUNNER_TEMP/design-repo/.gitignore"
           npx planchest docs design-repo > /dev/null
+          npx planchest view "$GITHUB_WORKSPACE/examples/stride/a" --build --out "$RUNNER_TEMP/viewer-dist"
+          test -f "$RUNNER_TEMP/viewer-dist/catalog.json"

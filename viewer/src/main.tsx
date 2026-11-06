@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import {Document} from "./Document";
 import {Preview} from "./Preview";
 import {asset} from "./paths";
-import type { Catalog } from "../../src/viewer/index";
+import type { Catalog, Entry } from "../../src/viewer/index";
 import "./style.css";
 const groups = [
   "prototypes",
@@ -86,11 +86,17 @@ function App() {
   const viewport = route.get("viewport") ?? "Mobile";
   const zoom = route.get("zoom") ?? "fit";
   const size = presets[viewport] ?? presets.Mobile;
+  // Archived: moved under an archive/ directory or marked status: archived.
+  const isArchived = (e: Entry) =>
+    e.file.includes("/archive/") || e.status === "archived";
+  const active = catalog?.entries.filter((e) => !isArchived(e)) ?? [];
+  const isEntry = (f: string) => !!catalog?.entries.some((e) => e.file === f);
   const entries =
     catalog?.entries.filter(
       (e) =>
-        (status === "archived" ? true : !e.file.includes("/archive/")) &&
-        (!status || e.status === status) &&
+        (status === "archived"
+          ? isArchived(e)
+          : !isArchived(e) && (!status || e.status === status)) &&
         `${e.title} ${e.file} ${e.status ?? ""} ${e.sections.join(" ")}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -202,18 +208,15 @@ function App() {
               </p>
               <div className="cards">
                 {groups.map((g) => {
-                  const count = catalog.entries.filter(
-                    (e) => e.kind === g,
-                  ).length;
+                  const count = active.filter((e) => e.kind === g).length;
                   return (
                     count > 0 && (
                       <button
                         key={g}
                         onClick={() => {
                           setQuery("");
-                          select(
-                            catalog.entries.find((e) => e.kind === g)!.file,
-                          );
+                          setStatus("");
+                          select(active.find((e) => e.kind === g)!.file);
                         }}
                       >
                         <span>{g}</span>
@@ -292,7 +295,7 @@ function App() {
                 </>
               ) : entry.format === "markdown" ? (
                 <div className="doc-scroll">
-                  <Document file={entry.file} onSelect={select} />
+                  <Document file={entry.file} onSelect={select} isEntry={isEntry} />
                 </div>
               ) : (
                 <div className="canvas">
@@ -330,7 +333,7 @@ function App() {
             {entry.spec ? (
               <>
                 <h3>Specification</h3>
-                <Document file={entry.spec} onSelect={select} />
+                <Document file={entry.spec} onSelect={select} isEntry={isEntry} />
               </>
             ) : (
               <p className="muted">No adjacent specification.</p>

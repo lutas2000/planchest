@@ -8,6 +8,7 @@ import { DOCS, docNames, init } from "./init.ts";
 
 const DEFAULT_OUT = ".planchest/diff";
 const DEFAULT_PORT = 4747;
+const DEFAULT_VIEWER_OUT = ".planchest/viewer";
 
 const HELP = `planchest — a design repo framework for AI agents
 
@@ -104,13 +105,15 @@ async function main(argv: string[]) {
 
   if (command === "view") {
     const [dir, extra] = rest;
-    if (extra) fail('view accepts one directory');
-    const root = resolve(cwd, dir ?? '.');
-    const out = resolve(cwd, values.out ?? '.planchest/viewer');
-    const { mkdirSync } = await import('node:fs');
-    const { dirname } = await import('node:path');
-    mkdirSync(dirname(out), { recursive: true });
-    const catalog = publishViewer(root, out);
+    if (extra) fail(`unexpected argument "${extra}"`);
+    const root = resolve(cwd, dir ?? ".");
+    const out = resolve(cwd, values.out ?? DEFAULT_VIEWER_OUT);
+    let catalog;
+    try {
+      catalog = publishViewer(root, out);
+    } catch (err) {
+      fail(err instanceof Error ? err.message : String(err));
+    }
     process.stdout.write(`Viewer: ${out}/index.html (${catalog.entries.length} entries)\n`);
     if (!values.build) await serveDir(out, port);
     return;

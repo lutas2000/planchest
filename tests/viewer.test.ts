@@ -18,7 +18,7 @@ test("catalog discovers real design content and parsed sections without exposing
     mkdirSync(join(root, "concepts/demo"), { recursive: true });
     writeFileSync(
       join(root, "concepts/demo/index.html"),
-      '<title>A &amp; B</title><section data-page="one"></section>',
+      '<title>\n  A &amp; B\n</title><svg><title>Icon</title></svg><section data-page="one"></section>',
     );
     writeFileSync(
       join(root, "concepts/demo/SPEC.md"),
@@ -50,7 +50,9 @@ test("publication preserves assets, protects input and refuses unrelated output"
     );
     assert.ok(existsSync(join(out, "assets")));
     publishViewer(source, out);
+    assert.ok(publishViewer(source, join(root, "deep/nested/out")).entries.length);
     assert.throws(() => publishViewer(source, source), /output/);
+    assert.throws(() => publishViewer(source, join(source, "prototypes/out")), /output/);
     const unrelated = join(root, "unrelated");
     mkdirSync(unrelated);
     writeFileSync(join(unrelated, "keep"), "keep");

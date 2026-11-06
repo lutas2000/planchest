@@ -7,8 +7,18 @@ import {
   writeFileSync,
   rmSync,
   realpathSync,
+  statSync,
 } from "node:fs";
-import { resolve, join, relative, basename, extname, dirname } from "node:path";
+import {
+  resolve,
+  join,
+  relative,
+  basename,
+  extname,
+  dirname,
+  isAbsolute,
+  sep,
+} from "node:path";
 import { parse } from "parse5";
 export interface Entry {
   file: string;
@@ -78,10 +88,13 @@ function inventory(root: string): string[] {
   visit(root);
   return files.sort();
 }
-export function buildCatalog(root: string): Catalog {
+const HTML_NS = "http://www.w3.org/1999/xhtml";
+export function buildCatalog(
+  root: string,
+  files: string[] = inventory(resolve(root)),
+): Catalog {
   root = resolve(root);
-  const files = inventory(root),
-    available = new Set(files);
+  const available = new Set(files);
   const entries: Entry[] = [];
   for (const file of files) {
     const ext = extname(file).toLowerCase();
@@ -103,14 +116,22 @@ export function buildCatalog(root: string): Catalog {
       ? readFileSync(join(root, file), "utf8")
       : "";
     let title = basename(file),
-      sections: string[] = [];
+      sections: string[] = [],
+      titled = false;
     if (ext === ".md") title = /^#\s+(.+)$/m.exec(text)?.[1] ?? title;
     if (ext === ".html" || ext === ".htm") {
       const doc = parse(text);
       function walk(node: any) {
-        if (node.tagName === "title")
-          title =
-            node.childNodes?.map((n: any) => n.value ?? "").join("") || title;
+        // Only the document's own <title>, not one inside inline SVG.
+        if (!titled && node.tagName === "title" && node.namespaceURI === HTML_NS) {
+          titled = true;
+          const text = node.childNodes
+            ?.map((n: any) => n.value ?? "")
+            .join("")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (text) title = text;
+        }
         const section = node.attrs?.find(
           (a: any) => a.name === "data-page",
         )?.value;
@@ -145,29 +166,41 @@ export function buildCatalog(root: string): Catalog {
     entries,
   };
 }
+/** True when `child` is strictly inside `parent` (platform separators). */
+function contains(parent: string, child: string): boolean {
+  const rel = relative(parent, child);
+  return rel !== "" && rel !== ".." && !rel.startsWith(".." + sep) && !isAbsolute(rel);
+}
+/** Real path of `path`, resolving symlinks in its nearest existing ancestor. */
+function realOutput(path: string): string {
+  let existing = path;
+  while (!existsSync(existing) && dirname(existing) !== existing)
+    existing = dirname(existing);
+  return resolve(realpathSync(existing), relative(existing, path));
+}
 export function publishViewer(source: string, destination: string): Catalog {
   const root = realpathSync(resolve(source)),
     out = resolve(destination);
-  const ancestor = existsSync(out)
-    ? realpathSync(out)
-    : resolve(realpathSync(dirname(out)), basename(out));
+  const ancestor = realOutput(out);
   if (
     root === ancestor ||
-    root.startsWith(ancestor + "/") ||
-    (ancestor.startsWith(root + "/") &&
-      relative(root, ancestor).split("/")[0] !== ".planchest")
+    contains(ancestor, root) ||
+    (contains(root, ancestor) &&
+      relative(root, ancestor).split(sep)[0] !== ".planchest")
   )
     throw new Error(
       "Viewer output must be outside source content (or inside .planchest).",
     );
   const marker = join(out, ".planchest-viewer");
+  if (existsSync(out) && !statSync(out).isDirectory())
+    throw new Error("Viewer output path exists and is not a directory.");
   if (existsSync(out) && !existsSync(marker) && readdirSync(out).length)
     throw new Error("Refusing to replace an unrelated output directory.");
   const assets = new URL("../../viewer-dist/", import.meta.url);
   if (!existsSync(assets))
     throw new Error("Viewer assets are missing. Run npm run build first.");
-  const catalog = buildCatalog(root),
-    files = inventory(root);
+  const files = inventory(root),
+    catalog = buildCatalog(root, files);
   if (existsSync(out)) rmSync(out, { recursive: true });
   mkdirSync(join(out, "repo"), { recursive: true });
   cpSync(assets, out, { recursive: true });
