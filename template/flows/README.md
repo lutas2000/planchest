@@ -38,7 +38,7 @@ The map of the product's screens: one self-contained page, written by the `planc
 
 - One `<ul>` tree. One `<li>` per screen or group, nested the way the navigation is, in navigation order.
 - A screen that exists in the repo is a link with a relative path: `../prototypes/run/start.html`, or `../concepts/home/index.html#today` for a concept section. A screen that does not exist yet is plain text.
-- `data-status` on each screen `<li>` is the `status` from the page's `SPEC.md`, or `missing` when there is no page.
+- Use `data-status` for a concept's `SPEC.md` status, or `missing` when there is no page. Omit it for prototypes: they are developer-ready by definition.
 - `data-flow` names the flow directory the screen belongs to (`data-flow="run"` → `flows/run/FLOW.md`).
 - Its own small inline `<style>`; it is not a product screen and does not use `system/` tokens.
 
@@ -56,11 +56,11 @@ li[data-status="missing"]::after { color: #c0392b; }
 <h1>Sitemap</h1>
 <ul>
   <li>Run <ul>
-    <li data-flow="run" data-status="approved"><a href="../prototypes/run/start.html">Start</a></li>
+    <li data-flow="run"><a href="../prototypes/run/start.html">Start</a></li>
     <li data-flow="run" data-status="missing">Countdown</li>
   </ul></li>
   <li>History <ul>
-    <li data-flow="history" data-status="approved"><a href="../prototypes/history/list.html">List</a></li>
+    <li data-flow="history"><a href="../prototypes/history/list.html">List</a></li>
   </ul></li>
 </ul>
 </body></html>

@@ -320,10 +320,14 @@ function App() {
                 ×
               </button>
             </div>
-            <span className="eyebrow">STATUS</span>
-            <p>
-              <span className="badge">{entry.status ?? "Unspecified"}</span>
-            </p>
+            {!entry.file.split("/").includes("prototypes") && (
+              <>
+                <span className="eyebrow">STATUS</span>
+                <p>
+                  <span className="badge">{entry.status ?? "Unspecified"}</span>
+                </p>
+              </>
+            )}
             {entry.sections.length > 0 && (
               <>
                 <h3>Sections</h3>

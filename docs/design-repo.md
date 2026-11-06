@@ -9,7 +9,7 @@ This document describes what a repository looks like, and which rules it keeps, 
 - **Three root documents, three jobs.** `AGENTS.md` holds the rules, `DESIGN.md` the visual system, `CONTEXT.md` the domain: vocabulary, business terms, audience and roles, forbidden words. `BRAND.md` holds the brand material that is not a visual token: the logo and its usage rules, voice and tone, copy rules, naming conventions. Every line of copy an agent writes in a prototype must follow `BRAND.md`.
 - **Materials and artifacts are kept apart.** `system/` is material (tokens, components, patterns); `concepts/` and `prototypes/` are artifacts. A prototype may only reference material and may not invent colours or components. A concept is exempt (next section).
 - **Every page is self-contained HTML that opens from a static server at the repo root.** No build step, no external CDN; every asset is referenced by a relative path to a file inside the repo. This is what lets the diff tool put any two versions side by side.
-- **Every artifact directory has a `SPEC.md`.** HTML can only say what something looks like; `SPEC.md` records why, so the next agent has the context. It starts with a `status:` field (`draft` / `review` / `approved` / `archived`), which replaces directory levels as the way to express maturity.
+- **Every artifact directory has a `SPEC.md`.** HTML can only say what something looks like; `SPEC.md` records why, so the next agent has the context. Concepts start with a `status:` field (`draft` / `review` / `approved` / `archived`). Prototypes have no status: they are developer-ready by definition, with `HANDOFF.md` delivered alongside the screens. PR review still applies.
 - **Review happens in pull requests.** Every new concept and every prototype change is a PR. The PR carries the diff report Planchest generates; the `planchest-review` checklist runs in CI (a `planchest check` command for its mechanical steps is planned); rejections stay in the PR discussion. Only decisions that outlive the PR are lifted into `decisions/`.
 
 ## Two tiers of artifacts (hard rules, written into `AGENTS.md`)
@@ -17,7 +17,7 @@ This document describes what a repository looks like, and which rules it keeps, 
 | Tier | Purpose | Constraints | Lifecycle |
 |---|---|---|---|
 | `concepts/` | Show an idea quickly, for discussion and a decision | Not bound by the design system: any colour, any layout; one `index.html` may hold several pages and flows | When the discussion ends, adopted or not, the concept moves to `concepts/archive/`; its `SPEC.md` records the outcome and links the PR or the decision record |
-| `prototypes/` | Rigorous, realistic, developer-ready screens | 100% from `system/` tokens, components and patterns; copy follows `BRAND.md`; every page maps back to `flows/` | Maintained long term; `status` goes draft → review → approved |
+| `prototypes/` | Rigorous, realistic, developer-ready screens | 100% from `system/` tokens, components and patterns; copy follows `BRAND.md`; every page maps back to `flows/` | Maintained long term; developer-ready, with no status lifecycle |
 
 When a concept's `index.html` holds several pages, each one is wrapped in a `<section data-page="<id>">` with a kebab-case `id`. The diff tool uses this attribute to compare pages separately and to build the page list.
 
@@ -79,7 +79,7 @@ product-a/
 │           ├── signup.html
 │           ├── verify.html
 │           ├── data.json      # Fake data
-│           ├── SPEC.md        # status, goal, user stories, acceptance, flow, source concept
+│           ├── SPEC.md        # Goal, user stories, acceptance, flow, source concept
 │           └── HANDOFF.md     # Interaction detail, copy, motion, edge cases
 │
 ├── mobile/
@@ -149,7 +149,7 @@ Planchest's tools require nothing to be installed in the repo. They depend only 
 - A concept's multi-page `index.html` is split into pages with `<section data-page>`.
 - `system/components/*/examples.html` exists and serves as the visual-regression baseline.
 - Prototypes reference only `system/tokens/tokens.css` and what is in `system/components/` and `system/patterns/`. The compliance check scans for hard-coded colours and unregistered components on that basis.
-- Every artifact directory has a `SPEC.md` that starts with `status:`; the diff report uses it to label each page's maturity.
+- Every artifact directory has a `SPEC.md`. Concepts use `status:` to describe their lifecycle; prototypes omit it, and the tools ignore legacy prototype statuses.
 - Platform directories (`web/`, `mobile/`) are optional. A product with one platform may keep `concepts/` and `prototypes/` at the product root; the `planchest-init` skill asks, and a platform directory can be added later by moving those two directories into it. The tools do not assume a platform level exists.
 
 ## References

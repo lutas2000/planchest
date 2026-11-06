@@ -1,5 +1,3 @@
-status: approved
-
 # Record a run
 
 Flow: `flows/run/FLOW.md`. Decision: `decisions/0001-goal-first-run.md`. Source concept: `concepts/home` (#plan).

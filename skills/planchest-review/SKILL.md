@@ -17,7 +17,7 @@ For browsing the current design library and reading adjacent specifications, use
    - `px` margins and paddings not expressed as `var(--space-*)`.
 2. **Unregistered components.** Every `class="btn …"`-style component class used in a prototype belongs to a component listed in `system/components/INDEX.md` with status `stable` or `beta`. Every `<link rel="stylesheet">` points inside `system/` or next to the page.
 3. **Self-contained.** No `http://`, `https://`, or `//` URLs in `src`, `href` or `url()`. No `<script type="module">` imports from outside the repo. Pages open from a static server at the repo root (`planchest diff` proves this: if the report shows a broken page, the rule is broken).
-4. **SPEC.md.** Every artifact directory touched has a `SPEC.md` whose first line is `status: draft|review|approved|archived`, and whose screen table matches the HTML files present.
+4. **SPEC.md.** Every artifact directory touched has a `SPEC.md` whose screen table matches the HTML files present. Concepts start with `status: draft|review|approved|archived`. Prototypes have no `status` field and include a current `HANDOFF.md`; verify they are developer-ready, with no unresolved acceptance items.
 5. **Tokens in sync.** If `DESIGN.md` front matter changed, `tokens.json` and `tokens.css` changed to match, and nothing else in `tokens.css` changed.
 6. **Index rows.** New component or pattern directories have a row in the matching `INDEX.md`; removed ones do not.
 

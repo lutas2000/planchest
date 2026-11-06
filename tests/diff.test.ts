@@ -23,9 +23,10 @@ test("extractSections is nesting-aware and keeps document order", () => {
 test("snapshot reads pages, sections and SPEC status", () => {
   const snap = snapshot(A);
   const signup = snap.pages.find((p) => p.file === "prototypes/onboarding/signup.html")!;
-  assert.equal(signup.status, "review");
+  assert.equal(signup.status, undefined);
   assert.equal(signup.title, "Sign up");
   const dash = snap.pages.find((p) => p.file === "concepts/dashboard/index.html")!;
+  assert.equal(dash.status, "draft");
   assert.deepEqual(dash.sections.map((s) => s.id), ["overview", "settings"]);
   assert.ok(snap.files.some((f) => f.file === "system/tokens/tokens.css"));
 });
@@ -34,7 +35,8 @@ test("compare classifies pages, sections and other files", () => {
   const c = compare(snapshot(A), snapshot(B));
   const byFile = Object.fromEntries(c.pages.map((p) => [p.file, p]));
   assert.equal(byFile["prototypes/onboarding/signup.html"].change, "changed");
-  assert.deepEqual(byFile["prototypes/onboarding/signup.html"].status, { a: "review", b: "approved" });
+  assert.equal(byFile["prototypes/onboarding/signup.html"].status, undefined);
+  assert.deepEqual(byFile["concepts/dashboard/index.html"].status, { a: "draft", b: "draft" });
   assert.equal(byFile["prototypes/onboarding/verify.html"].change, "removed");
   assert.equal(byFile["prototypes/onboarding/welcome.html"].change, "added");
   assert.deepEqual(

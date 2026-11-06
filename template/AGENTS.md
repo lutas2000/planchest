@@ -27,7 +27,7 @@ Platform directories (`web/`, `mobile/`) are optional. When present, each holds 
 2. **Two tiers, two sets of rules.**
    - `concepts/` is free. Use any colour, any layout, any amount of inline CSS. A single `index.html` may hold several screens: wrap each in `<section data-page="kebab-case-id">`. Do not edit `system/` from a concept.
    - `prototypes/` is strict. Use only `system/tokens/tokens.css` custom properties, components listed in `system/components/INDEX.md` and patterns listed in `system/patterns/INDEX.md`. No hard-coded colours, font sizes, radii or spacing. Copy follows `BRAND.md`. Every screen maps to a step in `flows/`.
-3. **Every artifact directory has a `SPEC.md`** whose first line is `status: draft | review | approved | archived`. HTML says what it looks like; `SPEC.md` says why.
+3. **Every artifact directory has a `SPEC.md`** that explains why; HTML says what it looks like. Concepts start with `status: draft | review | approved | archived`. Prototypes are developer-ready by definition: omit `status` and include `HANDOFF.md` in the same change. PR review still applies.
 4. **Concepts are archived, never promoted.** After the discussion ends, move the concept to `concepts/archive/`, set `status: archived`, and record the outcome and the PR link in its `SPEC.md`. A prototype is a fresh implementation built from the concept, not an edit of it.
 5. **New tokens and components go through `system/` first.** If a prototype needs something the system lacks, open a PR that adds it to `system/` (with `SPEC.md` and `examples.html`), then use it.
 6. **Review happens in pull requests.** Every concept and every prototype change is a PR with a Planchest diff report attached. Rejections stay in the PR; durable decisions move to `decisions/`.

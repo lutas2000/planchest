@@ -37,6 +37,34 @@ test("catalog discovers real design content and parsed sections without exposing
     rmSync(root, { recursive: true, force: true });
   }
 });
+test("prototypes have no catalog status, including legacy specs and platform paths", () => {
+  const root = mkdtempSync(join(tmpdir(), "viewer-prototype-"));
+  try {
+    const files: string[] = [];
+    for (const [dir, spec] of [
+      ["prototypes/legacy", "status: draft\n# Legacy"],
+      ["prototypes/current", "# Current"],
+      ["web/prototypes/demo", "status: review\n# Web"],
+      ["products/app/mobile/prototypes/demo", "status: approved\n# Mobile"],
+    ]) {
+      mkdirSync(join(root, dir), { recursive: true });
+      writeFileSync(join(root, dir, "index.html"), "<title>Prototype</title>");
+      writeFileSync(join(root, dir, "SPEC.md"), spec);
+      files.push(`${dir}/index.html`, `${dir}/SPEC.md`);
+    }
+    // Pass the file list explicitly to exercise metadata for nested platform paths.
+    const entries = buildCatalog(root, files).entries;
+    assert.ok(entries.length > 0);
+    for (const entry of entries) {
+      assert.equal(entry.status, undefined, entry.file);
+    }
+    assert.ok(entries.some((e) => e.file === "prototypes/current/index.html"));
+    assert.ok(entries.some((e) => e.file === "web/prototypes/demo/index.html"));
+    assert.ok(entries.some((e) => e.file === "products/app/mobile/prototypes/demo/index.html"));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 test("publication preserves assets, protects input and refuses unrelated output", () => {
   const root = mkdtempSync(join(tmpdir(), "viewer-publish-"));
   const source = resolve("examples/stride/a");
