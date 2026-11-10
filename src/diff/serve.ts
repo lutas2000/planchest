@@ -45,6 +45,11 @@ export function serve(dir: string, port: number): Promise<{ server: Server; url:
     res.writeHead(200, {
       "content-type": TYPES[extname(file).toLowerCase()] ?? "application/octet-stream",
       "cache-control": "no-store",
+      // Viewer previews run in sandboxed iframes with an opaque ("null")
+      // origin. Let them fetch sibling design files (strings, partials)
+      // without granting the frame the Viewer's own origin. Only opaque
+      // origins match, so ordinary websites still cannot read the server.
+      ...(path.startsWith("/repo/") ? { "access-control-allow-origin": "null" } : {}),
     });
     createReadStream(file).pipe(res);
   });

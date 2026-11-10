@@ -151,6 +151,8 @@ Planchest's tools require nothing to be installed in the repo. They depend only 
 - Prototypes reference only `system/tokens/tokens.css` and what is in `system/components/` and `system/patterns/`. The compliance check scans for hard-coded colours and unregistered components on that basis.
 - Every artifact directory has a `SPEC.md`. Concepts use `status:` to describe their lifecycle; prototypes omit it, and the tools ignore legacy prototype statuses.
 - Platform directories (`web/`, `mobile/`) are optional. A product with one platform may keep `concepts/` and `prototypes/` at the product root; the `planchest-init` skill asks, and a platform directory can be added later by moving those two directories into it. The tools do not assume a platform level exists.
+- Optional: `planchest.json` at the repo root holds tool settings. `viewer.viewports` replaces the Viewer's viewport presets (`[{ "id", "label", "width", "height" }]`), `viewer.default` picks the preset that opens first, and `viewer.compare` lists the ids shown side by side in Compare mode.
+- Optional: a page that offers controls (locale, state) talks to the Viewer with `postMessage`. It posts `{ "type": "planchest:controls", "controls": [{ "name", "label", "value", "options": [{ "value", "label" }] }] }` to its parent when it loads and whenever a value or option list changes, and applies `{ "type": "planchest:set", "name", "value" }` messages, ignoring names and values it does not offer. The Viewer keeps the values in its hash and sends them again after each load with `"restore": true`, which a page that is still initialising can treat differently from a live change, so the controls live outside the page and the page needs no toolbar of its own.
 
 ## References
 

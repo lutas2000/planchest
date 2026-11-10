@@ -29,11 +29,75 @@ export interface Entry {
   spec?: string;
   sections: string[];
 }
+export interface Viewport {
+  id: string;
+  label: string;
+  width: number;
+  height: number;
+}
+/** Optional Viewer settings from the design repo's planchest.json. */
+export interface ViewerConfig {
+  viewports?: Viewport[];
+  default?: string;
+  compare?: string[];
+}
 export interface Catalog {
   version: 1;
   name: string;
   generatedAt: string;
+  viewer?: ViewerConfig;
   entries: Entry[];
+}
+/** Read and validate `viewer` from planchest.json at the repo root, if present. */
+export function readViewerConfig(root: string): ViewerConfig | undefined {
+  const file = join(resolve(root), "planchest.json");
+  if (!existsSync(file)) return undefined;
+  let raw: any;
+  try {
+    raw = JSON.parse(readFileSync(file, "utf8"));
+  } catch (e) {
+    throw new Error(`planchest.json is not valid JSON: ${(e as Error).message}`);
+  }
+  const viewer = raw?.viewer;
+  if (viewer === undefined) return undefined;
+  const fail = (message: string): never => {
+    throw new Error(`planchest.json viewer: ${message}`);
+  };
+  if (typeof viewer !== "object" || viewer === null) fail("must be an object");
+  const config: ViewerConfig = {};
+  if (viewer.viewports !== undefined) {
+    if (!Array.isArray(viewer.viewports) || !viewer.viewports.length)
+      fail("viewports must be a non-empty array");
+    const ids = new Set<string>();
+    config.viewports = viewer.viewports.map((v: any, i: number) => {
+      const id = typeof v?.id === "string" ? v.id : "";
+      if (!id || ["compare", "fill"].includes(id) || ids.has(id))
+        fail(`viewports[${i}].id must be a unique string other than compare or fill`);
+      ids.add(id);
+      for (const key of ["width", "height"])
+        if (!Number.isInteger(v[key]) || v[key] < 1 || v[key] > 10000)
+          fail(`viewports[${i}].${key} must be a positive integer`);
+      return {
+        id,
+        label: typeof v.label === "string" && v.label ? v.label : `${v.width} × ${v.height}`,
+        width: v.width,
+        height: v.height,
+      };
+    });
+  }
+  const known = (id: unknown) =>
+    typeof id === "string" &&
+    (config.viewports ? config.viewports.some((v) => v.id === id) : true);
+  if (viewer.default !== undefined) {
+    if (!known(viewer.default)) fail("default must be the id of a viewport");
+    config.default = viewer.default;
+  }
+  if (viewer.compare !== undefined) {
+    if (!Array.isArray(viewer.compare) || viewer.compare.length < 2 || !viewer.compare.every(known))
+      fail("compare must list at least two viewport ids");
+    config.compare = viewer.compare;
+  }
+  return config;
 }
 const roots = new Set([
   "prototypes",
@@ -161,10 +225,12 @@ export function buildCatalog(
       spec: available.has(spec) && spec !== file ? spec : undefined,
     });
   }
+  const viewer = readViewerConfig(root);
   return {
     version: 1,
     name: basename(root),
     generatedAt: new Date().toISOString(),
+    ...(viewer ? { viewer } : {}),
     entries,
   };
 }

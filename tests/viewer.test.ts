@@ -90,3 +90,57 @@ test("publication preserves assets, protects input and refuses unrelated output"
     rmSync(root, { recursive: true, force: true });
   }
 });
+test("viewer settings come from planchest.json and are validated", () => {
+  const root = mkdtempSync(join(tmpdir(), "viewer-config-"));
+  try {
+    mkdirSync(join(root, "prototypes/a"), { recursive: true });
+    writeFileSync(join(root, "prototypes/a/index.html"), "<title>A</title>");
+    assert.equal(buildCatalog(root).viewer, undefined);
+    writeFileSync(
+      join(root, "planchest.json"),
+      JSON.stringify({
+        viewer: {
+          viewports: [
+            { id: "320", label: "Smallest", width: 320, height: 568 },
+            { id: "390", width: 390, height: 844 },
+          ],
+          default: "390",
+          compare: ["320", "390"],
+        },
+      }),
+    );
+    const viewer = buildCatalog(root).viewer!;
+    assert.equal(viewer.default, "390");
+    assert.deepEqual(viewer.compare, ["320", "390"]);
+    assert.equal(viewer.viewports![1].label, "390 × 844");
+    for (const bad of [
+      { viewports: [] },
+      { viewports: [{ id: "fill", width: 1, height: 1 }] },
+      { viewports: [{ id: "a", width: 0, height: 1 }] },
+      { viewports: [{ id: "a", width: 1, height: 1 }], default: "b" },
+      { viewports: [{ id: "a", width: 1, height: 1 }], compare: ["a"] },
+    ]) {
+      writeFileSync(join(root, "planchest.json"), JSON.stringify({ viewer: bad }));
+      assert.throws(() => buildCatalog(root), /planchest\.json viewer/);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+test("served previews may fetch design files from an opaque origin only", async () => {
+  const { serve } = await import("../src/diff/serve.ts");
+  const root = mkdtempSync(join(tmpdir(), "viewer-serve-"));
+  mkdirSync(join(root, "repo"), { recursive: true });
+  writeFileSync(join(root, "repo/strings.json"), "{}");
+  writeFileSync(join(root, "index.html"), "<title>Viewer</title>");
+  const { server, url } = await serve(root, 0);
+  try {
+    const repo = await fetch(url + "repo/strings.json");
+    assert.equal(repo.headers.get("access-control-allow-origin"), "null");
+    const shell = await fetch(url + "index.html");
+    assert.equal(shell.headers.get("access-control-allow-origin"), null);
+  } finally {
+    server.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});

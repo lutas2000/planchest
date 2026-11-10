@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {Document} from "./Document";
 import {Preview} from "./Preview";
+import type {PageControl} from "./Preview";
 import {asset} from "./paths";
-import type { Catalog, Entry } from "../../src/viewer/index";
+import type { Catalog, Entry, Viewport } from "../../src/viewer/index";
 import "./style.css";
 const groups = [
   "prototypes",
@@ -14,12 +15,28 @@ const groups = [
   "decisions",
   "sources",
 ];
-const presets: Record<string, [number, number]> = {
-  Mobile: [390, 844],
-  Small: [320, 568],
-  Tablet: [768, 1024],
-  Desktop: [1440, 900],
-};
+// Used when the design repo's planchest.json does not list viewports.
+const defaultViewports: Viewport[] = [
+  { id: "Mobile", label: "Mobile", width: 390, height: 844 },
+  { id: "Small", label: "Small", width: 320, height: 568 },
+  { id: "Tablet", label: "Tablet", width: 768, height: 1024 },
+  { id: "Desktop", label: "Desktop", width: 1440, height: 900 },
+];
+// Page control values live in the Viewer hash as c-<name>=<value>.
+const controlKey = (name: string) => "c-" + name;
+function readControls(data: unknown): PageControl[] | undefined {
+  const d = data as { type?: unknown; controls?: unknown };
+  if (d?.type !== "planchest:controls" || !Array.isArray(d.controls)) return;
+  const text = (v: unknown) => (typeof v === "string" ? v : undefined);
+  return d.controls.flatMap((c: any) => {
+    const name = text(c?.name);
+    if (!name || !/^[\w.-]+$/.test(name) || !Array.isArray(c.options)) return [];
+    const options = c.options.flatMap((o: any) =>
+      text(o?.value) !== undefined ? [{ value: o.value, label: text(o.label) }] : [],
+    );
+    return [{ name, label: text(c.label), value: text(c.value) ?? "", options }];
+  });
+}
 function readRoute() {
   return new URLSearchParams(location.hash.slice(1));
 }
@@ -33,6 +50,10 @@ function App() {
   const [nav, setNav] = useState(innerWidth >= 768);
   const [dark, setDark] = useState(false);
   const search = useRef<HTMLInputElement>(null);
+  const [controls, setControls] = useState<PageControl[]>([]);
+  const frames = useRef<(HTMLIFrameElement | null)[]>([]);
+  const routeRef = useRef(route);
+  routeRef.current = route;
   useEffect(() => {
     fetch("catalog.json")
       .then((r) => {
@@ -69,6 +90,18 @@ function App() {
       window.removeEventListener("keydown", key);
     };
   }, []);
+  useEffect(() => {
+    const receive = (event: MessageEvent) => {
+      const index = frames.current.findIndex(
+        (f) => f && f.contentWindow === event.source,
+      );
+      const list = index < 0 ? undefined : readControls(event.data);
+      // The first frame's report is what the toolbar shows.
+      if (list && index === 0) setControls(list);
+    };
+    window.addEventListener("message", receive);
+    return () => window.removeEventListener("message", receive);
+  }, []);
   const update = (values: Record<string, string>) => {
     const next = new URLSearchParams(route);
     for (const [k, v] of Object.entries(values)) {
@@ -83,9 +116,45 @@ function App() {
   };
   const file = route.get("file"),
     entry = catalog?.entries.find((e) => e.file === file);
-  const viewport = route.get("viewport") ?? "Mobile";
+  useEffect(() => {
+    setControls([]);
+  }, [file]);
+  // After each load, hand the frame the control values kept in the hash.
+  // A page ignores names and values it does not offer.
+  const restoreControls = (index: number) => {
+    const target = frames.current[index]?.contentWindow;
+    for (const [key, value] of routeRef.current)
+      if (key.startsWith("c-"))
+        target?.postMessage(
+          { type: "planchest:set", name: key.slice(2), value, restore: true },
+          "*",
+        );
+  };
+  const viewports = catalog?.viewer?.viewports ?? defaultViewports;
+  const byId = (id: string) => viewports.find((v) => v.id === id);
+  const fallback = byId(catalog?.viewer?.default ?? "") ?? viewports[0];
+  const compareSet = (catalog?.viewer?.compare ?? viewports.map((v) => v.id))
+    .map(byId)
+    .filter((v): v is Viewport => !!v);
+  const requested = route.get("viewport") ?? fallback.id;
+  const viewport =
+    requested === "compare" || requested === "fill" || byId(requested)
+      ? requested
+      : fallback.id;
+  const shown =
+    viewport === "compare" ? compareSet : [byId(viewport) ?? fallback];
   const zoom = route.get("zoom") ?? "fit";
-  const size = presets[viewport] ?? presets.Mobile;
+  const setControl = (name: string, value: string) => {
+    update({ [controlKey(name)]: value });
+    setControls((list) =>
+      list.map((c) => (c.name === name ? { ...c, value } : c)),
+    );
+    for (const frame of frames.current)
+      frame?.contentWindow?.postMessage(
+        { type: "planchest:set", name, value },
+        "*",
+      );
+  };
   // Archived: moved under an archive/ directory or marked status: archived.
   const isArchived = (e: Entry) =>
     e.file.includes("/archive/") || e.status === "archived";
@@ -267,17 +336,26 @@ function App() {
                         value={viewport}
                         onChange={(e) => update({ viewport: e.target.value })}
                       >
-                        {Object.keys(presets).map((p) => (
-                          <option key={p}>{p}</option>
+                        {viewports.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.label}
+                          </option>
                         ))}
+                        {compareSet.length > 1 && (
+                          <option value="compare">Compare</option>
+                        )}
+                        <option value="fill">Fill</option>
                       </select>
                     </label>
-                    <span className="path">
-                      {size[0]} × {size[1]}
-                    </span>
+                    {shown.length === 1 && viewport !== "fill" && (
+                      <span className="path">
+                        {shown[0].width} × {shown[0].height}
+                      </span>
+                    )}
                     <label>
                       Zoom{" "}
                       <select
+                        disabled={viewport === "fill"}
                         value={zoom}
                         onChange={(e) => update({ zoom: e.target.value })}
                       >
@@ -289,9 +367,31 @@ function App() {
                         ))}
                       </select>
                     </label>
+                    {controls.map((c) => (
+                      <label key={c.name}>
+                        {c.label ?? c.name}{" "}
+                        <select
+                          value={c.value}
+                          onChange={(e) => setControl(c.name, e.target.value)}
+                        >
+                          {c.options.map((o) => (
+                            <option key={o.value} value={o.value}>
+                              {o.label ?? o.value}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
                     <span className="muted">Isolated preview</span>
                   </div>
-                  <Preview entry={entry} size={size} zoom={zoom} />
+                  <Preview
+                    entry={entry}
+                    viewports={shown}
+                    fill={viewport === "fill"}
+                    zoom={zoom}
+                    onFrames={(list) => (frames.current = list)}
+                    onFrameLoad={restoreControls}
+                  />
                 </>
               ) : entry.format === "markdown" ? (
                 <div className="doc-scroll">
