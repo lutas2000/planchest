@@ -4,7 +4,7 @@ import {Document} from "./Document";
 import {Preview} from "./Preview";
 import { PresetSelect, StatePanel } from "./StatePanel";
 import type { Commit, Step } from "./StatePanel";
-import { readMachine, sameSnapshot, changedContext, stable } from "../../src/machine";
+import { readMachine, readObject, sameSnapshot, changedContext, stable } from "../../src/machine";
 import type { Context, Machine, Snapshot } from "../../src/machine";
 import {asset} from "./paths";
 import { PanelToggles, Segmented } from "./shared/controls";
@@ -33,14 +33,7 @@ const defaultViewports: Viewport[] = [
 ];
 // The state machine's snapshot lives in the Viewer hash as state=<id> and
 // ctx=<JSON of the context keys that differ from the page's defaults>.
-function readContext(raw: string | null): Context {
-  try {
-    const v = JSON.parse(raw ?? "{}");
-    return typeof v === "object" && v && !Array.isArray(v) ? v : {};
-  } catch {
-    return {};
-  }
-}
+const readContext = (raw: string | null): Context => (raw && readObject(raw)) || {};
 // What a page's machine is, apart from its current snapshot.
 const definition = (m: Machine) =>
   stable({ states: m.states, transitions: m.transitions, presets: m.presets, fields: m.fields });

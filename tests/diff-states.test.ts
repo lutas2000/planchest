@@ -8,7 +8,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { chromium } from "playwright";
+import { launchBrowser } from "../src/browser.ts";
 import type { Browser } from "playwright";
 import { diff, diffWithStates } from "../src/diff/index.ts";
 import { serve } from "../src/diff/serve.ts";
@@ -33,9 +33,7 @@ function sides() {
 test("states that look different are listed, and the report shows them", async (t) => {
   let browser: Browser;
   try {
-    browser = await chromium.launch(
-      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
-    );
+    browser = await launchBrowser(process.cwd());
   } catch {
     t.skip("Chromium is not installed");
     return;
@@ -119,9 +117,7 @@ test("--no-states and pages without a state machine never need a browser", async
 test("screenshots that differ only by rendering noise look the same", async (t) => {
   let browser: Browser;
   try {
-    browser = await chromium.launch(
-      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
-    );
+    browser = await launchBrowser(process.cwd());
   } catch {
     t.skip("Chromium is not installed");
     return;
@@ -159,9 +155,7 @@ report();
 
 test("a failure part way through leaves the plain diff and says why", async (t) => {
   try {
-    const b = await chromium.launch(
-      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
-    );
+    const b = await launchBrowser(process.cwd());
     await b.close();
   } catch {
     t.skip("Chromium is not installed");

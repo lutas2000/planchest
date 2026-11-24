@@ -8,7 +8,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parse } from "parse5";
 import { serve } from "./diff/serve.ts";
 import { captureMachine, launchBrowser } from "./browser.ts";
-import { applyPreset, readMachine } from "./machine.ts";
+import { applyPreset, readMachine, readObject } from "./machine.ts";
 import type { Context, Snapshot } from "./machine.ts";
 
 export const DEFAULT_SITEMAP = "flows/sitemap.html";
@@ -92,13 +92,9 @@ export function collectShots(root: string, sitemap = DEFAULT_SITEMAP): Shot[] {
       if (state) shot.state = state;
       const context = attr(node, "data-context");
       if (context !== undefined) {
-        let value: unknown;
-        try {
-          value = JSON.parse(context);
-        } catch {}
-        if (typeof value !== "object" || value === null || Array.isArray(value))
-          throw new Error(`data-shot="${page}": data-context must be a JSON object`);
-        shot.context = value as Context;
+        const value = readObject(context);
+        if (!value) throw new Error(`data-shot="${page}": data-context must be a JSON object`);
+        shot.context = value;
       }
       shots.push(shot);
     }

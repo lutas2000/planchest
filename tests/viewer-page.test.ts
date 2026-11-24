@@ -8,7 +8,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { chromium } from "playwright";
+import { launchBrowser } from "../src/browser.ts";
 import type { Browser, Frame, Page } from "playwright";
 import { serve } from "../src/diff/serve.ts";
 import { publishViewer } from "../src/viewer/index.ts";
@@ -23,9 +23,7 @@ const hash = (page: Page) =>
 test("the Viewer drives a page's state machine and keeps the snapshot in its hash", async (t) => {
   let browser: Browser;
   try {
-    browser = await chromium.launch(
-      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
-    );
+    browser = await launchBrowser(process.cwd());
   } catch {
     t.skip("Chromium is not installed");
     return;

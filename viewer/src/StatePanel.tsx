@@ -4,6 +4,7 @@ import {
   available,
   changedContext,
   fire,
+  isObject,
   matchingPreset,
   sameType,
   stable,
@@ -389,9 +390,8 @@ function JsonEditor({
   const [error, setError] = useState("");
   const apply = () => {
     try {
-      const parsed = JSON.parse(value);
-      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
-        throw Error("Context must be a JSON object");
+      const parsed: unknown = JSON.parse(value);
+      if (!isObject(parsed)) throw Error("Context must be a JSON object");
       setError("");
       onApply(parsed);
     } catch (e) {

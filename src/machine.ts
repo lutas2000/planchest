@@ -60,8 +60,19 @@ export const DEFAULT_PRESET = "default";
 
 const ID = /^[\w.:-]+$/;
 const text = (v: unknown) => (typeof v === "string" ? v : undefined);
-const isObject = (v: unknown): v is Record<string, unknown> =>
+/** A plain object: not null and not an array. */
+export const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
+
+/** `text` parsed as a JSON object, or undefined when it is not one. */
+export function readObject(text: string): Context | undefined {
+  try {
+    const value: unknown = JSON.parse(text);
+    return isObject(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 /** The machine in a `planchest:machine` message, or undefined for any other data. */
 export function readMachine(data: unknown): Machine | undefined {
