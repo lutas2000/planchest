@@ -48,7 +48,31 @@ function App() {
   const [status, setStatus] = useState("");
   const [details, setDetails] = useState(innerWidth >= 1024);
   const [nav, setNav] = useState(innerWidth >= 768);
-  const [dark, setDark] = useState(false);
+  // No choice stored: follow the system, as the diff report does.
+  const [theme, setTheme] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("planchest.theme");
+    } catch {
+      return null;
+    }
+  });
+  const [systemDark, setSystemDark] = useState(
+    () => matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+  useEffect(() => {
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const change = () => setSystemDark(media.matches);
+    media.addEventListener("change", change);
+    return () => media.removeEventListener("change", change);
+  }, []);
+  useEffect(() => {
+    if (theme) document.documentElement.dataset.theme = theme;
+    else delete document.documentElement.dataset.theme;
+    try {
+      if (theme) localStorage.setItem("planchest.theme", theme);
+    } catch {}
+  }, [theme]);
+  const dark = theme ? theme === "dark" : systemDark;
   const search = useRef<HTMLInputElement>(null);
   const [controls, setControls] = useState<PageControl[]>([]);
   const frames = useRef<(HTMLIFrameElement | null)[]>([]);
@@ -170,22 +194,56 @@ function App() {
           .toLowerCase()
           .includes(query.toLowerCase()),
     ) ?? [];
+  const statuses = ["draft", "review", "approved"];
+  const statusCounts = statuses
+    .map((s) => [s, active.filter((e) => e.status === s).length] as const)
+    .filter(([, n]) => n > 0);
+  const zooms = [
+    ["fit", "Fit"],
+    ["1", "100%"],
+    ["0.75", "75%"],
+    ["0.5", "50%"],
+  ];
   return (
-    <div className={"app " + (dark ? "dark" : "")}>
+    <div className="app">
       <header>
         <button className="brand" onClick={() => update({ file: "" })}>
-          <span className="logo">▤</span> Planchest{" "}
-          <span className="tag">VIEWER</span>
+          Planchest viewer
         </button>
-        <span className="project">{catalog?.name ?? "Design library"}</span>
-        <div className="header-actions">
-          <button onClick={() => setNav(!nav)} aria-pressed={nav}>
+        <div className="sides">
+          <b>{catalog?.name ?? "Design library"}</b>
+          {entry && <> / {entry.title}</>}
+        </div>
+        <div className="counts">
+          {statusCounts.map(([s, n]) => (
+            <span key={s} className={"count " + s}>
+              {n} {s}
+            </span>
+          ))}
+        </div>
+        <div className="group panels">
+          <button
+            data-panel="nav"
+            onClick={() => setNav(!nav)}
+            aria-pressed={nav}
+            title="Show or hide the library"
+          >
             Library
           </button>
-          <button onClick={() => setDetails(!details)} aria-pressed={details}>
+          <button
+            data-panel="details"
+            onClick={() => setDetails(!details)}
+            aria-pressed={details}
+            title="Show or hide the details"
+          >
             Details
           </button>
-          <button onClick={() => setDark(!dark)}>
+        </div>
+        <div className="group">
+          <button
+            onClick={() => setTheme(dark ? "light" : "dark")}
+            title="Switch between light and dark"
+          >
             {dark ? "Light" : "Dark"}
           </button>
         </div>
@@ -193,13 +251,12 @@ function App() {
       <div className="workspace">
         {nav && (
           <nav aria-label="Design library">
-            <div className="nav-head">
-              <span className="eyebrow">WORKSPACE</span>
-              <h2>Design library</h2>
+            <div className="search">
               <input
+                type="search"
                 ref={search}
                 aria-label="Search library"
-                placeholder="Search library…  /"
+                placeholder="Search…  /"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -209,13 +266,14 @@ function App() {
                 onChange={(e) => setStatus(e.target.value)}
               >
                 <option value="">Active · all statuses</option>
-                {["draft", "review", "approved", "archived"].map((s) => (
+                {[...statuses, "archived"].map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </select>
             </div>
             <button
-              className={"nav-item " + (!file ? "selected" : "")}
+              className="item"
+              aria-current={!file}
               onClick={() => update({ file: "" })}
             >
               Overview
@@ -225,39 +283,28 @@ function App() {
               return (
                 items.length > 0 && (
                   <section key={group}>
-                    <h3>
+                    <h2>
                       {group}
                       <span>{items.length}</span>
-                    </h3>
+                    </h2>
                     {items.map((e) => (
                       <button
-                        className={
-                          "nav-item " + (e.file === file ? "selected" : "")
-                        }
+                        className={"item " + (isArchived(e) ? "archived" : e.status ?? "")}
+                        aria-current={e.file === file}
                         key={e.file}
                         onClick={() => select(e.file)}
                         title={e.file}
                       >
-                        <span className="file-icon">
-                          {e.format === "html"
-                            ? "▣"
-                            : e.format === "markdown"
-                              ? "≡"
-                              : "◇"}
-                        </span>
-                        <span>
-                          {e.title}
-                          <small>{e.file.replace(group + "/", "")}</small>
-                        </span>
+                        {e.status && <span className="status">{e.status}</span>}
+                        {e.title}
+                        <small>{e.file.replace(group + "/", "")}</small>
                       </button>
                     ))}
                   </section>
                 )
               );
             })}
-            {!entries.length && (
-              <p className="muted padded">No matching files.</p>
-            )}
+            {!entries.length && <p className="none">No matching files.</p>}
           </nav>
         )}
         <main>
@@ -270,11 +317,13 @@ function App() {
             <div className="empty">Loading library…</div>
           ) : !file ? (
             <div className="overview">
-              <span className="eyebrow">YOUR DESIGN WORKSPACE</span>
-              <h1>Every idea, in view.</h1>
-              <p className="muted">
-                Explore screens, understand decisions, and inspect the details.
+              <h1>{catalog.name}</h1>
+              <p className="none">
+                {active.length} files. Snapshot generated{" "}
+                {new Date(catalog.generatedAt).toLocaleString()}; rerun{" "}
+                <code>planchest view</code> to refresh.
               </p>
+              <h2>Collections</h2>
               <div className="cards">
                 {groups.map((g) => {
                   const count = active.filter((e) => e.kind === g).length;
@@ -290,17 +339,23 @@ function App() {
                       >
                         <span>{g}</span>
                         <strong>{count}</strong>
-                        <small>Explore collection →</small>
                       </button>
                     )
                   );
                 })}
               </div>
-              <p className="muted">
-                Snapshot generated{" "}
-                {new Date(catalog.generatedAt).toLocaleString()}. Rerun
-                planchest view to refresh.
-              </p>
+              {statusCounts.length > 0 && (
+                <>
+                  <h2>Status</h2>
+                  <div className="counts">
+                    {statusCounts.map(([s, n]) => (
+                      <span key={s} className={"count " + s}>
+                        {n} {s}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           ) : !entry ? (
             <div className="empty">
@@ -312,61 +367,55 @@ function App() {
             </div>
           ) : (
             <>
-              <div className="titlebar">
-                <div>
-                  <span className="eyebrow">{entry.kind}</span>
-                  <h1>{entry.title}</h1>
-                  <small className="path">{entry.file}</small>
-                </div>
-                <a
-                  className="button"
-                  href={asset(entry.file)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open original ↗
-                </a>
-              </div>
-              {entry.format === "html" ? (
-                <>
-                  <div className="toolbar">
-                    <label>
-                      Viewport{" "}
-                      <select
-                        value={viewport}
-                        onChange={(e) => update({ viewport: e.target.value })}
+              <div className="toolbar">
+                {entry.format === "html" && (
+                  <>
+                    <div className="group">
+                      {viewports.map((v) => (
+                        <button
+                          key={v.id}
+                          aria-pressed={viewport === v.id}
+                          title={`${v.width} × ${v.height}`}
+                          onClick={() => update({ viewport: v.id })}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                      {compareSet.length > 1 && (
+                        <button
+                          aria-pressed={viewport === "compare"}
+                          title="Show several viewports side by side"
+                          onClick={() => update({ viewport: "compare" })}
+                        >
+                          Compare
+                        </button>
+                      )}
+                      <button
+                        aria-pressed={viewport === "fill"}
+                        title="Fill the window"
+                        onClick={() => update({ viewport: "fill" })}
                       >
-                        {viewports.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.label}
-                          </option>
-                        ))}
-                        {compareSet.length > 1 && (
-                          <option value="compare">Compare</option>
-                        )}
-                        <option value="fill">Fill</option>
-                      </select>
-                    </label>
+                        Fill
+                      </button>
+                    </div>
                     {shown.length === 1 && viewport !== "fill" && (
-                      <span className="path">
+                      <span className="dims">
                         {shown[0].width} × {shown[0].height}
                       </span>
                     )}
-                    <label>
-                      Zoom{" "}
-                      <select
-                        disabled={viewport === "fill"}
-                        value={zoom}
-                        onChange={(e) => update({ zoom: e.target.value })}
-                      >
-                        <option value="fit">Fit</option>
-                        {[1, 0.75, 0.5].map((n) => (
-                          <option key={n} value={n}>
-                            {n * 100}%
-                          </option>
+                    {viewport !== "fill" && (
+                      <div className="group">
+                        {zooms.map(([z, label]) => (
+                          <button
+                            key={z}
+                            aria-pressed={zoom === z}
+                            onClick={() => update({ zoom: z })}
+                          >
+                            {label}
+                          </button>
                         ))}
-                      </select>
-                    </label>
+                      </div>
+                    )}
                     {controls.map((c) => (
                       <label key={c.name}>
                         {c.label ?? c.name}{" "}
@@ -382,23 +431,35 @@ function App() {
                         </select>
                       </label>
                     ))}
-                    <span className="muted">Isolated preview</span>
-                  </div>
-                  <Preview
-                    entry={entry}
-                    viewports={shown}
-                    fill={viewport === "fill"}
-                    zoom={zoom}
-                    onFrames={(list) => (frames.current = list)}
-                    onFrameLoad={restoreControls}
-                  />
-                </>
+                  </>
+                )}
+                <span className="where">
+                  <span className="path">{entry.file}</span>
+                  <a
+                    className="open"
+                    href={asset(entry.file)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open original ↗
+                  </a>
+                </span>
+              </div>
+              {entry.format === "html" ? (
+                <Preview
+                  entry={entry}
+                  viewports={shown}
+                  fill={viewport === "fill"}
+                  zoom={zoom}
+                  onFrames={(list) => (frames.current = list)}
+                  onFrameLoad={restoreControls}
+                />
               ) : entry.format === "markdown" ? (
                 <div className="doc-scroll">
                   <Document file={entry.file} onSelect={select} isEntry={isEntry} />
                 </div>
               ) : (
-                <div className="canvas">
+                <div className="stage">
                   <img
                     className="image"
                     src={asset(entry.file)}
@@ -410,40 +471,37 @@ function App() {
           )}
         </main>
         {details && entry && (
-          <aside>
-            <div className="aside-heading">
-              <h2>Details</h2>
-              <button
-                onClick={() => setDetails(false)}
-                aria-label="Close details"
-              >
-                ×
-              </button>
-            </div>
+          <aside aria-label="Details">
             {!entry.file.split("/").includes("prototypes") && (
               <>
-                <span className="eyebrow">STATUS</span>
+                <h2>Status</h2>
                 <p>
-                  <span className="badge">{entry.status ?? "Unspecified"}</span>
+                  <span className={"badge " + (entry.status ?? "")}>
+                    {entry.status ?? "unspecified"}
+                  </span>
                 </p>
               </>
             )}
             {entry.sections.length > 0 && (
               <>
-                <h3>Sections</h3>
-                <p className="muted">{entry.sections.join(" · ")}</p>
+                <h2>Sections</h2>
+                <p className="chips">
+                  {entry.sections.map((s) => (
+                    <span key={s} className="chip">
+                      #{s}
+                    </span>
+                  ))}
+                </p>
               </>
             )}
+            <h2>Specification</h2>
             {entry.spec ? (
-              <>
-                <h3>Specification</h3>
-                <Document file={entry.spec} onSelect={select} isEntry={isEntry} />
-              </>
+              <Document file={entry.spec} onSelect={select} isEntry={isEntry} />
             ) : (
-              <p className="muted">No adjacent specification.</p>
+              <p className="none">No adjacent specification.</p>
             )}
             {entry.format === "html" && (
-              <p className="notice">
+              <p className="none notice">
                 Preview scripts run in isolation. If a prototype requires origin
                 storage or data access, open the original page.
               </p>

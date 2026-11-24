@@ -2,16 +2,25 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stride sitemap</title>
 <style>
-body { font: 14px/1.5 -apple-system, system-ui, sans-serif; margin: 24px; color: #16181d; }
-h1 { font-size: 18px; margin: 0 0 4px; }
-p { margin: 0 0 16px; color: #667085; }
-ul { list-style: none; padding-left: 20px; border-left: 1px solid #e1e4ea; margin: 0; }
-body > ul { padding-left: 0; border-left: 0; }
-li { margin: 6px 0; }
-li > a { color: #16181d; text-decoration: none; border-bottom: 1px solid #e1e4ea; }
-li[data-status]::after { content: attr(data-status); font-size: 11px; color: #667085; margin-left: 8px; }
-li[data-status="missing"]::after { color: #d92d20; }
-li[data-flow]::before { content: attr(data-flow) " · "; font-size: 11px; color: #667085; }
+:root { --bg: #fafaf8; --fg: #1c1c1a; --muted: #6b6b66; --line: #e3e2dc; --accent: #2f5bea; --approved: #1f8a4c; --missing: #c0392b; --draft: #b7791f; }
+@media (prefers-color-scheme: dark) { :root { --bg: #161614; --fg: #ecece8; --muted: #9a9a93; --line: #2c2c29; --accent: #7c9bff; --approved: #5ccc85; --missing: #ff7b6b; --draft: #e6b45a; } }
+body { margin: 0; padding: 16px 24px; background: var(--bg); color: var(--fg); font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+h1 { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+body > p { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
+ul { list-style: none; margin: 4px 0 0; padding-left: 14px; border-left: 1px solid var(--line); }
+body > ul { padding: 0; border: 0; }
+body > ul > li { margin-top: 14px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+body > ul > li > ul { font-size: 14px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--fg); }
+li li { padding: 3px 0; max-width: 560px; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--accent); text-decoration: underline; }
+li[data-flow]::before { content: attr(data-flow); float: right; margin-left: 12px; font: 11px/20px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted); }
+li[data-status]::after { content: attr(data-status); margin-left: 6px; padding: 0 4px; font-size: 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+li[data-status="draft"]::after { color: var(--draft); }
+li[data-status="review"]::after { color: var(--accent); }
+li[data-status="approved"]::after { color: var(--approved); }
+li[data-status="missing"] { color: var(--muted); }
+li[data-status="missing"]::after { color: var(--missing); border-color: currentColor; }
 </style></head>
 <body>
 <h1>Stride 1.1</h1>

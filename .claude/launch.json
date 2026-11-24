@@ -26,6 +26,20 @@
         "4748"
       ],
       "port": 4748
+    },
+    {
+      "name": "stride-viewer",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "bin/planchest.js",
+        "view",
+        "examples/stride/b",
+        "--out",
+        ".planchest/stride-viewer",
+        "--port",
+        "4749"
+      ],
+      "port": 4749
     }
   ]
 }
