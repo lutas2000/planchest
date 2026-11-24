@@ -21,6 +21,10 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+      # The diff report page is committed (the plugin runs without a build);
+      # npm test rebuilt it, so any difference means it was not rebuilt.
+      - name: Check the committed report page is current
+        run: git diff --exit-code -- report-dist
       - name: Run from the checkout
         run: |
           node bin/planchest.js diff examples/stride/a examples/stride/b --out "$RUNNER_TEMP/report-src"

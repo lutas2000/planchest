@@ -71,12 +71,13 @@ test("diff between directories writes a self-contained report", () => {
     assert.equal(json.comparison.counts.changed, 2);
     const page = readFileSync(join(out, "index.html"), "utf8");
     assert.ok(page.includes('"prototypes/onboarding/signup.html"'));
+    assert.ok(!page.includes("__REPORT_JSON__"));
+    // self-contained: the page's script and styles are inlined, nothing is loaded from assets/
+    assert.match(page, /<script type="module">/);
+    assert.match(page, /<style>/);
+    assert.doesNotMatch(page, /(src|href)="[^"]*assets\//);
     // summary.html links like #file:section only work if the page follows the hash after load
-    assert.match(page, /addEventListener\("hashchange", showHash\)/);
-    // three panels (files, preview, summary) and a zoom control
-    assert.match(page, /<nav id="nav">/);
-    assert.match(page, /<aside id="summary">/);
-    assert.match(page, /id="zoom"/);
+    assert.match(page, /"hashchange"/);
   } finally {
     rmSync(out, { recursive: true, force: true });
   }

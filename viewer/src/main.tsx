@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {Document} from "./Document";
 import {Preview} from "./Preview";
 import type {PageControl} from "./Preview";
 import {asset} from "./paths";
+import { PanelToggles, Segmented } from "./shared/controls";
+import type { Option } from "./shared/controls";
 import type { Catalog, Entry, Viewport } from "../../src/viewer/index";
+import "./shared/base.css";
 import "./style.css";
 const groups = [
   "prototypes",
@@ -201,11 +204,22 @@ function App() {
   const statusCounts = statuses
     .map((s) => [s, active.filter((e) => e.status === s).length] as const)
     .filter(([, n]) => n > 0);
-  const zooms = [
-    ["fit", "Fit"],
-    ["1", "100%"],
-    ["0.75", "75%"],
-    ["0.5", "50%"],
+  const zooms: Option<string>[] = [
+    { value: "fit", label: "Fit" },
+    { value: "1", label: "100%" },
+    { value: "0.75", label: "75%" },
+    { value: "0.5", label: "50%" },
+  ];
+  const viewportOptions: Option<string>[] = [
+    ...viewports.map((v) => ({
+      value: v.id,
+      label: v.label,
+      title: `${v.width} × ${v.height}`,
+    })),
+    ...(compareSet.length > 1
+      ? [{ value: "compare", label: "Compare", title: "Show several viewports side by side" }]
+      : []),
+    { value: "fill", label: "Fill", title: "Fill the window" },
   ];
   return (
     <div className="app">
@@ -224,24 +238,26 @@ function App() {
             </span>
           ))}
         </div>
-        <div className="group panels">
-          <button
-            data-panel="nav"
-            onClick={() => setNav(!nav)}
-            aria-pressed={nav}
-            title="Show or hide the library"
-          >
-            Library
-          </button>
-          <button
-            data-panel="details"
-            onClick={() => setDetails(!details)}
-            aria-pressed={details}
-            title="Show or hide the details"
-          >
-            Details
-          </button>
-        </div>
+        <PanelToggles
+          panels={[
+            {
+              id: "nav",
+              label: "Library",
+              title: "Show or hide the library",
+              side: "left",
+              open: nav,
+              toggle: () => setNav(!nav),
+            },
+            {
+              id: "details",
+              label: "Details",
+              title: "Show or hide the details",
+              side: "right",
+              open: details,
+              toggle: () => setDetails(!details),
+            },
+          ]}
+        />
         <div className="group">
           <button
             onClick={() => setTheme(dark ? "light" : "dark")}
@@ -384,51 +400,24 @@ function App() {
               <div className="toolbar">
                 {entry.format === "html" && (
                   <>
-                    <div className="group">
-                      {viewports.map((v) => (
-                        <button
-                          key={v.id}
-                          aria-pressed={viewport === v.id}
-                          title={`${v.width} × ${v.height}`}
-                          onClick={() => update({ viewport: v.id })}
-                        >
-                          {v.label}
-                        </button>
-                      ))}
-                      {compareSet.length > 1 && (
-                        <button
-                          aria-pressed={viewport === "compare"}
-                          title="Show several viewports side by side"
-                          onClick={() => update({ viewport: "compare" })}
-                        >
-                          Compare
-                        </button>
-                      )}
-                      <button
-                        aria-pressed={viewport === "fill"}
-                        title="Fill the window"
-                        onClick={() => update({ viewport: "fill" })}
-                      >
-                        Fill
-                      </button>
-                    </div>
+                    <Segmented
+                      label="Viewport"
+                      options={viewportOptions}
+                      value={viewport}
+                      onChange={(v) => update({ viewport: v })}
+                    />
                     {shown.length === 1 && viewport !== "fill" && (
                       <span className="dims">
                         {shown[0].width} × {shown[0].height}
                       </span>
                     )}
                     {viewport !== "fill" && (
-                      <div className="group">
-                        {zooms.map(([z, label]) => (
-                          <button
-                            key={z}
-                            aria-pressed={zoom === z}
-                            onClick={() => update({ zoom: z })}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
+                      <Segmented
+                        label="Zoom"
+                        options={zooms}
+                        value={zoom}
+                        onChange={(z) => update({ zoom: z })}
+                      />
                     )}
                     {controls.map((c) => (
                       <label key={c.name}>
