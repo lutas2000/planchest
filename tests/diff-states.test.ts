@@ -4,7 +4,7 @@
 // (`npx playwright install chromium`); CI installs it.
 
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -138,5 +138,49 @@ test("screenshots that differ only by rendering noise look the same", async (t) 
     assert.equal(await looksSame(page, base, await shot("rgb(160, 100, 100)")), false);
   } finally {
     await browser.close();
+  }
+});
+
+// A page that renders its default and each preset; `onState` runs on each
+// snapshot the diff sends.
+const machinePage = (onState = "") => `<!doctype html><html><body><p id="s"></p><script>
+const machine = { states: ["one", "two"], presets: [{ name: "second", state: "two" }] };
+let snap = { state: "one", context: {} };
+const report = () => parent.postMessage({ type: "planchest:machine", ...machine, ...snap }, "*");
+addEventListener("message", (e) => {
+  if (e.data?.type !== "planchest:state") return;
+  snap = { state: e.data.state, context: e.data.context };
+  document.getElementById("s").textContent = snap.state;
+  ${onState}
+  report();
+});
+report();
+</script></body></html>`;
+
+test("a failure part way through leaves the plain diff and says why", async (t) => {
+  try {
+    const b = await chromium.launch(
+      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
+    );
+    await b.close();
+  } catch {
+    t.skip("Chromium is not installed");
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), "planchest-states-"));
+  try {
+    for (const side of ["a", "b"]) {
+      mkdirSync(join(dir, side), { recursive: true });
+      writeFileSync(join(dir, side, "1-fine.html"), machinePage());
+      // Reloading while the diff waits for it breaks the comparison.
+      writeFileSync(join(dir, side, "2-broken.html"), machinePage('if (snap.state === "two") location.reload();'));
+    }
+    const plain = diff("a", "b", { cwd: dir, out: join(dir, "plain") }).comparison;
+    const report = await diffWithStates("a", "b", { cwd: dir, out: join(dir, "out") });
+    assert.match(report.comparison.states?.skipped ?? "", /\S/);
+    assert.ok(report.comparison.pages.every((p) => !p.states));
+    assert.deepEqual(report.comparison.counts, plain.counts);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

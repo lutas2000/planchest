@@ -241,9 +241,7 @@ function FileList({
   return (
     <nav aria-label="Changed files">
       {cmp.states?.skipped && (
-        <p className="note" title={cmp.states.skipped}>
-          States were not compared: Playwright or Chromium is missing.
-        </p>
+        <p className="note">States were not compared: {cmp.states.skipped}</p>
       )}
       {groups.map(([key, title]) => {
         const pages = cmp.pages.filter((p) => p.change === key);

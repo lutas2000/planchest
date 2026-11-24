@@ -11,7 +11,7 @@ import { captureMachine, launchBrowser } from "../browser.ts";
 import { applyPreset, DEFAULT_PRESET, readMachine } from "../machine.ts";
 import type { Machine, Snapshot } from "../machine.ts";
 import { readViewerConfig } from "../viewer/index.ts";
-import type { Change, Comparison, PageDiff } from "./compare.ts";
+import type { Change, Comparison, PageDiff, StateDiff } from "./compare.ts";
 import { serve } from "./serve.ts";
 
 /** The id of the page's own first snapshot among a page's states. */
@@ -107,6 +107,9 @@ export async function compareStates(
   try {
     // Decodes screenshots to compare them.
     const decoder = await browser.newPage();
+    // Applied only once every page is done, so a failure part way through
+    // leaves the comparison as the plain diff made it.
+    const results: [PageDiff, StateDiff[]][] = [];
     for (const p of candidates) {
       const rendered: Partial<Record<"a" | "b", Map<string, Rendered>>> = {};
       for (const side of sides(p)) {
@@ -162,12 +165,12 @@ export async function compareStates(
       const { a, b } = rendered;
       if (!a && !b) continue;
       const ids = [...new Set([...(a?.keys() ?? []), ...(b?.keys() ?? [])])];
-      p.states = [];
+      const states: StateDiff[] = [];
       for (const id of ids) {
         const ra = a?.get(id), rb = b?.get(id);
         const change: Change =
           !ra ? "added" : !rb ? "removed" : (await looksSame(decoder, ra.png, rb.png)) ? "unchanged" : "changed";
-        p.states.push({
+        states.push({
           id,
           change,
           ...((rb ?? ra)!.label && { label: (rb ?? ra)!.label }),
@@ -175,8 +178,12 @@ export async function compareStates(
           ...(rb && { b: rb.snapshot }),
         });
       }
+      results.push([p, states]);
+    }
+    for (const [p, states] of results) {
+      p.states = states;
       // Same HTML can still look different, such as after a token change.
-      if (p.change === "unchanged" && p.states.some((s) => s.change !== "unchanged")) {
+      if (p.change === "unchanged" && states.some((s) => s.change !== "unchanged")) {
         comparison.counts.unchanged--;
         comparison.counts.changed++;
         p.change = "changed";
