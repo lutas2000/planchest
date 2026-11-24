@@ -15,21 +15,31 @@ export const TEMPLATE = `<!doctype html>
 <style>
 :root {
   --bg: #fafaf8; --fg: #1c1c1a; --muted: #6b6b66; --line: #e3e2dc; --panel: #ffffff;
-  --accent: #2f5bea; --added: #1f8a4c; --removed: #c0392b; --changed: #b7791f;
+  --accent: #2f5bea; --added: #1f8a4c; --removed: #c0392b; --changed: #9a6412;
+  --hover: color-mix(in srgb, var(--fg) 5%, transparent);
+  --pressed: color-mix(in srgb, var(--fg) 10%, transparent);
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --nav-w: 280px; --summary-w: 360px;
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #161614; --fg: #ecece8; --muted: #9a9a93; --line: #2c2c29; --panel: #1f1f1c;
     --accent: #7c9bff; --added: #5ccc85; --removed: #ff7b6b; --changed: #e6b45a;
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --bg: #161614; --fg: #ecece8; --muted: #9a9a93; --line: #2c2c29; --panel: #1f1f1c;
+  --accent: #7c9bff; --added: #5ccc85; --removed: #ff7b6b; --changed: #e6b45a;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); display: grid; grid-template-rows: auto 1fr; }
 button { font: inherit; color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
 header h1 { font-size: 15px; margin: 0; font-weight: 600; }
 header .sides { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -41,8 +51,10 @@ header .counts { margin-left: auto; display: flex; gap: 12px; font-size: 12px; }
 .count.changed { color: var(--changed); border-color: currentColor; }
 .group { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .group button { border: 0; background: none; font-size: 12px; height: 28px; padding: 0 12px; cursor: pointer; }
+.group button { color: var(--muted); }
 .group button + button { border-left: 1px solid var(--line); }
-.group button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.group button:hover { background: var(--hover); color: var(--fg); }
+.group button[aria-pressed="true"] { background: var(--pressed); color: var(--fg); }
 header .panels button { display: inline-flex; align-items: center; gap: 8px; }
 header .panels button::before { content: ""; width: 10px; height: 8px; border: 1px solid currentColor; border-radius: 2px; opacity: .8; }
 header .panels button[data-panel="nav"]::before { border-left-width: 4px; }
@@ -54,8 +66,8 @@ main[data-nav="off"] nav { display: none; }
 nav h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 16px 8px; font-weight: 600; }
 nav h2:first-child { margin-top: 8px; }
 nav button { display: block; width: 100%; text-align: left; border: 0; background: none; min-height: 32px; padding: 6px 16px 6px 32px; cursor: pointer; position: relative; overflow-wrap: anywhere; }
-nav button:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
-nav button[aria-current="true"] { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+nav button:hover { background: var(--hover); }
+nav button[aria-current="true"] { background: var(--pressed); box-shadow: inset 2px 0 0 var(--accent); }
 nav button::before { content: ""; position: absolute; left: 16px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
 nav button.added::before { background: var(--added); }
 nav button.removed::before { background: var(--removed); }
