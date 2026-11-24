@@ -51,8 +51,12 @@ jobs:
         with:
           node-version: 24
 
+      # Dev dependencies include Playwright, which the diff uses to compare the
+      # states of pages with a state machine. Without Chromium it skips them.
       - name: Install Planchest
-        run: npm ci --omit=dev --prefix .planchest/tool
+        run: |
+          npm ci --prefix .planchest/tool
+          (cd .planchest/tool && npx playwright install --with-deps chromium)
 
       - name: Render the diff report
         id: diff

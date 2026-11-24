@@ -88,8 +88,12 @@ test("the Viewer drives a page's state machine and keeps the snapshot in its has
     await page.getByRole("button", { name: "Compare" }).click();
     await page.waitForFunction(() => document.querySelectorAll("iframe").length > 1);
     await panel.locator(".events button", { hasText: "Pause" }).click();
-    for (const f of page.frames().filter((f) => f.url().endsWith("/run/active.html")))
-      await f.locator('[data-bind="toggle"]', { hasText: "Resume" }).waitFor();
+    const count = await page.locator("iframe").count();
+    for (let i = 0; i < count; i++)
+      await page
+        .frameLocator(`iframe >> nth=${i}`)
+        .locator('[data-bind="toggle"]', { hasText: "Resume" })
+        .waitFor();
 
     // The JSON editor applies a whole context.
     await panel.getByRole("button", { name: "Edit as JSON" }).click();

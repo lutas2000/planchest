@@ -1,0 +1,116 @@
+// `planchest diff` compares the states of pages with a state machine by
+// rendering them, and the report lists only the states that look different.
+// Skipped when Playwright's Chromium is not installed
+// (`npx playwright install chromium`); CI installs it.
+
+import assert from "node:assert/strict";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { test } from "node:test";
+import { chromium } from "playwright";
+import type { Browser } from "playwright";
+import { diff, diffWithStates } from "../src/diff/index.ts";
+import { serve } from "../src/diff/serve.ts";
+
+const example = new URL("../examples/stride/b/", import.meta.url).pathname;
+const PAGE = "prototypes/run/active.html";
+
+function sides() {
+  const dir = mkdtempSync(join(tmpdir(), "planchest-states-"));
+  cpSync(example, join(dir, "a"), { recursive: true });
+  cpSync(example, join(dir, "b"), { recursive: true });
+  const file = join(dir, "b", PAGE);
+  const html = readFileSync(file, "utf8")
+    // Only the paused state shows this note.
+    .replace(".paused-note { font-size: var(--text-sm);", ".paused-note { font-size: var(--text-lg);")
+    .replace("  presets: [\n", '  presets: [\n    { name: "long-goal", label: "Long goal", context: { goalKm: 21.1 } },\n');
+  writeFileSync(file, html);
+  return dir;
+}
+
+test("states that look different are listed, and the report shows them", async (t) => {
+  let browser: Browser;
+  try {
+    browser = await chromium.launch(
+      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
+    );
+  } catch {
+    t.skip("Chromium is not installed");
+    return;
+  }
+  const dir = sides();
+  const out = join(dir, "out");
+  try {
+    const report = await diffWithStates("a", "b", { cwd: dir, out });
+    const page = report.comparison.pages.find((p) => p.file === PAGE)!;
+    const changes = Object.fromEntries(page.states!.map((s) => [s.id, s.change]));
+    assert.deepEqual(changes, {
+      default: "unchanged",
+      "just-started": "unchanged",
+      "almost-there": "unchanged",
+      "weak-gps": "unchanged",
+      "paused-halfway": "changed",
+      "long-goal": "added",
+    });
+    assert.equal(page.states!.find((s) => s.id === "paused-halfway")!.b!.state, "paused");
+    assert.deepEqual(report.comparison.states, { viewport: { width: 1280, height: 800 } });
+    const json = JSON.parse(readFileSync(join(out, "report.json"), "utf8"));
+    assert.equal(json.comparison.pages.find((p: any) => p.file === PAGE).states.length, 6);
+
+    // The report lists the two states that differ and counts the rest.
+    const { server, url } = await serve(out, 0);
+    try {
+      const tab = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+      const errors: string[] = [];
+      tab.on("pageerror", (e) => errors.push(e.message));
+      await tab.goto(url);
+      const items = tab.locator("nav .item.state");
+      await items.first().waitFor();
+      assert.deepEqual(await items.allInnerTexts(), ["@Paused halfway", "@Long goal"]);
+      assert.match(await tab.locator("nav .same").innerText(), /4 states look the same/);
+
+      // Selecting a state sends each side its snapshot; the hash keeps it.
+      await items.first().click();
+      for (const side of ["a", "b"])
+        await tab
+          .frameLocator(`iframe[src="${side}/${PAGE}"]`)
+          .locator('[data-bind="toggle"]', { hasText: "Resume" })
+          .waitFor();
+      assert.equal(await tab.evaluate(() => location.hash), "#" + encodeURIComponent(PAGE) + "@paused-halfway");
+      await tab.reload();
+      await tab.locator('nav .item.state[aria-current="true"]', { hasText: "Paused halfway" }).waitFor();
+
+      // A state only one side has leaves the other side empty.
+      await items.nth(1).click();
+      await tab.locator(".frame.missing", { hasText: "Not in A" }).waitFor();
+      assert.deepEqual(errors, []);
+    } finally {
+      server.close();
+    }
+  } finally {
+    await browser.close();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("--no-states and pages without a state machine never need a browser", async () => {
+  const dir = sides();
+  try {
+    const off = await diffWithStates("a", "b", { cwd: dir, out: join(dir, "off"), states: false });
+    assert.equal(off.comparison.states, undefined);
+    assert.equal(off.comparison.pages.find((p) => p.file === PAGE)!.states, undefined);
+    // Without the machine, there is nothing to render.
+    for (const side of ["a", "b"]) {
+      const file = join(dir, side, PAGE);
+      writeFileSync(file, readFileSync(file, "utf8").replace(/<script>[\s\S]*<\/script>/, ""));
+    }
+    const plain = await diffWithStates("a", "b", { cwd: dir, out: join(dir, "plain") });
+    assert.equal(plain.comparison.states?.skipped, undefined);
+    assert.ok(plain.comparison.pages.every((p) => !p.states));
+    // The plain diff is unchanged.
+    assert.deepEqual(diff("a", "b", { cwd: dir, out: join(dir, "sync") }).comparison.counts, plain.comparison.counts);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

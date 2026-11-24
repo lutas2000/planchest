@@ -4,11 +4,10 @@
 // PNG to the img's src, so the sitemap stays a plain static page.
 
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
 import { parse } from "parse5";
 import { serve } from "./diff/serve.ts";
+import { captureMachine, launchBrowser } from "./browser.ts";
 import { applyPreset, readMachine } from "./machine.ts";
 import type { Context, Snapshot } from "./machine.ts";
 
@@ -110,11 +109,6 @@ export function collectShots(root: string, sitemap = DEFAULT_SITEMAP): Shot[] {
   return shots;
 }
 
-const INSTALL =
-  "screenshots need Playwright: run `npm install --save-dev playwright` and " +
-  "`npx playwright install chromium` in the design repo, or set " +
-  "PLANCHEST_BROWSER to a Chromium executable";
-
 /**
  * Renders the sitemap's screenshots. A page section (`#id` naming a
  * `section[data-page]`) is shot on its own, as the diff report shows it.
@@ -127,39 +121,13 @@ export async function takeShots(
   root = resolve(root);
   const shots = collectShots(root, sitemap);
   if (!shots.length) return shots;
-  // Playwright is optional and only needed here: take the design repo's
-  // own copy first, then one installed next to planchest.
-  let chromium;
-  const pick = (mod: any) => mod.chromium ?? mod.default?.chromium;
-  try {
-    const local = createRequire(join(root, "package.json")).resolve("playwright");
-    chromium = pick(await import(pathToFileURL(local).href));
-  } catch {}
-  if (!chromium) {
-    try {
-      const name = "playwright";
-      chromium = pick(await import(name));
-    } catch {}
-  }
-  if (!chromium) throw new Error(INSTALL);
-  let browser;
-  try {
-    browser = await chromium.launch(
-      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
-    );
-  } catch (err) {
-    throw new Error(`${INSTALL}\n${err instanceof Error ? err.message.split("\n")[0] : err}`);
-  }
+  const browser = await launchBrowser(root);
   const { server, url } = await serve(root, 0);
   try {
     for (const shot of shots) {
       const page = await browser.newPage({ viewport: { width: shot.width, height: shot.height } });
       // At the top level a page's report to its parent comes back to itself.
-      await page.addInitScript(() =>
-        addEventListener("message", (e) => {
-          if (e.data?.type === "planchest:machine") (window as any).__planchestMachine = e.data;
-        }),
-      );
+      await page.addInitScript(captureMachine);
       await page.goto(new URL(shot.page, url).href, { waitUntil: "load" });
       const section = decodeURIComponent(new URL(shot.page, url).hash.slice(1));
       if (section)

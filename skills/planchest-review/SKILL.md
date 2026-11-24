@@ -20,14 +20,15 @@ For browsing the current design library and reading adjacent specifications, use
 4. **SPEC.md.** Every artifact directory touched has a `SPEC.md` whose screen table matches the HTML files present. Concepts start with `status: draft|review|approved|archived`. Prototypes have no `status` field and include a current `HANDOFF.md`; verify they are developer-ready, with no unresolved acceptance items.
 5. **Tokens in sync.** If `DESIGN.md` front matter changed, `tokens.json` and `tokens.css` changed to match, and nothing else in `tokens.css` changed.
 6. **Index rows.** New component or pattern directories have a row in the matching `INDEX.md`; removed ones do not.
+7. **State machines.** A page that posts `planchest:machine` renders everything that varies from its `context`: no value on screen is hard-coded where the context has a key for it. Every state is reachable by some transition or preset, every preset's `state` exists, and the page reports again after applying `planchest:state` and after its own buttons change the state. Open it in the Viewer and step through the presets; an error in the console or a preset that shows the default fails the check.
 
 ## Judgement checks
 
-7. **Flow coverage.** Each prototype screen names its flow step; each edge case in the flow has a screen or a written reason.
-8. **Accessibility.** Landmarks, heading order, labels on every input, visible focus, 4.5:1 text contrast against its surface (compute from the tokens), 40px minimum targets, no colour as the only signal.
-9. **Responsive.** Open the diff report at 375 and 1280: no horizontal scroll at 375, nothing stretched past its measure at 1280.
-10. **Copy.** Follows `BRAND.md` voice and `CONTEXT.md` vocabulary; no forbidden words; buttons are verbs.
-11. **Decisions.** The change does not contradict an accepted record in `decisions/` without saying so in `SPEC.md`.
+8. **Flow coverage.** Each prototype screen names its flow step; each edge case in the flow has a screen, a preset of a page's state machine, or a written reason. Name the preset in `SPEC.md` so the reviewer can find it.
+9. **Accessibility.** Landmarks, heading order, labels on every input, visible focus, 4.5:1 text contrast against its surface (compute from the tokens), 40px minimum targets, no colour as the only signal.
+10. **Responsive.** Open the diff report at 375 and 1280: no horizontal scroll at 375, nothing stretched past its measure at 1280.
+11. **Copy.** Follows `BRAND.md` voice and `CONTEXT.md` vocabulary; no forbidden words; buttons are verbs.
+12. **Decisions.** The change does not contradict an accepted record in `decisions/` without saying so in `SPEC.md`.
 
 ## Report
 
