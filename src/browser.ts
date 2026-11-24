@@ -32,7 +32,9 @@ export async function launchBrowser(root: string): Promise<any> {
       process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
     );
   } catch (err) {
-    throw new Error(`${INSTALL}\n${err instanceof Error ? err.message.split("\n")[0] : err}`);
+    throw new Error(`${INSTALL}\n${err instanceof Error ? err.message.split("\n")[0] : err}`, {
+      cause: err,
+    });
   }
 }
 
