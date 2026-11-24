@@ -45,11 +45,10 @@ header h1 { font-size: 15px; margin: 0; font-weight: 500; }
 header .sides { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 header .sides b { color: var(--fg); font-weight: 500; }
 header .counts { margin-left: auto; display: flex; gap: 12px; font-size: 12px; }
-.count { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-.count.added { color: var(--added); border-color: currentColor; }
-.count.removed { color: var(--removed); border-color: currentColor; }
-.count.changed { color: var(--changed); border-color: currentColor; }
-.group { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.count { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); white-space: nowrap; }
+.count::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--status, var(--line)); }
+.added { --status: var(--added); } .removed { --status: var(--removed); } .changed { --status: var(--changed); }
+.group { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .group button { border: 0; background: none; font-size: 12px; height: 28px; padding: 0 12px; cursor: pointer; }
 .group button { color: var(--muted); }
 .group button + button { border-left: 1px solid var(--line); }
@@ -72,13 +71,13 @@ nav button::before { content: ""; position: absolute; left: 16px; top: 12px; wid
 nav button.added::before { background: var(--added); }
 nav button.removed::before { background: var(--removed); }
 nav button.changed::before { background: var(--changed); }
-nav button .status { float: right; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 8px; }
+nav button .status { float: right; font: 11px/20px var(--mono); color: var(--muted); margin-left: 8px; }
 nav button.section { min-height: 28px; padding: 4px 16px 4px 48px; font-family: var(--mono); font-size: 12px; }
 nav button.section::before { left: 32px; top: 10px; }
 nav details summary { cursor: pointer; list-style: none; }
 nav details summary::-webkit-details-marker { display: none; }
-nav details summary h2::after { content: " ▸"; }
-nav details[open] summary h2::after { content: " ▾"; }
+nav details summary h2::after { content: ""; display: inline-block; width: 6px; height: 6px; margin: 0 0 2px 8px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(-45deg); }
+nav details[open] summary h2::after { transform: rotate(45deg); }
 nav .files { padding: 0 16px 8px 32px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
 nav .files div { padding: 4px 0; overflow-wrap: anywhere; }
 nav .files .added { color: var(--added); } nav .files .removed { color: var(--removed); } nav .files .changed { color: var(--changed); }
@@ -99,18 +98,20 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
 .toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); font-size: 12px; }
 .toolbar label { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); }
 .toolbar label[hidden] { display: none; }
-.toolbar input[type=number] { width: 64px; font: inherit; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: inherit; }
+.toolbar input[type=number] { width: 64px; font: inherit; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: inherit; }
 .toolbar .custom { position: relative; }
-.toolbar .custom summary { list-style: none; display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); cursor: pointer; }
+.toolbar .custom summary { list-style: none; display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); cursor: pointer; }
 .toolbar .custom summary::-webkit-details-marker { display: none; }
 .toolbar .custom summary:hover, .toolbar .custom[open] summary { background: var(--hover); color: var(--fg); }
-.toolbar .custom .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
+.toolbar .custom .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
 .toolbar .custom label { justify-content: space-between; }
 .toolbar .path { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .stage { position: relative; overflow: auto; padding: 16px; }
 .pair { position: relative; display: flex; gap: 16px; align-items: flex-start; width: max-content; margin: 0 auto; }
-.frame { position: relative; flex: 0 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.frame .tag { position: absolute; top: 0; left: 0; z-index: 2; font: 500 11px/1 var(--mono); padding: 4px 8px; background: var(--fg); color: var(--bg); border-bottom-right-radius: 6px; opacity: .85; pointer-events: none; }
+.frame { position: relative; flex: 0 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.frame .tag { position: absolute; top: 0; left: 0; z-index: 2; font: 500 11px/16px var(--mono); padding: 4px 8px; background: var(--panel); color: var(--muted); border: solid var(--line); border-width: 0 1px 1px 0; border-bottom-right-radius: 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+.frame .tag b { color: var(--fg); font-weight: 500; margin-right: 8px; }
+.stage.overlay .frame + .frame .tag { left: auto; right: 0; border-width: 0 0 1px 1px; border-radius: 0 0 0 8px; }
 .frame iframe { display: block; border: 0; background: #fff; transform-origin: 0 0; transform: scale(var(--zoom, 1)); }
 .frame.missing { display: grid; place-items: center; color: var(--muted); font-size: 12px; }
 .stage.overlay .pair .frame + .frame { position: absolute; top: 0; left: 0; }
@@ -275,7 +276,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
     frames = ["a", "b"].map((side) => {
       const wrap = document.createElement("div");
       wrap.className = "frame";
-      wrap.innerHTML = '<span class="tag">' + side.toUpperCase() + "</span>";
+      wrap.innerHTML = '<span class="tag"><b>' + side.toUpperCase() + "</b>" + esc(sideLabel(report[side])) + "</span>";
       if (!exists[side]) {
         wrap.classList.add("missing");
         wrap.append(side === "a" ? "Not in A" : "Not in B");

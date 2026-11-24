@@ -254,14 +254,18 @@ function App() {
         {nav && (
           <nav aria-label="Design library">
             <div className="search">
-              <input
-                type="search"
-                ref={search}
-                aria-label="Search library"
-                placeholder="Search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+              <label>
+                <input
+                  type="search"
+                  ref={search}
+                  aria-label="Search library"
+                  aria-keyshortcuts="/"
+                  placeholder="Search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                <kbd aria-hidden="true">/</kbd>
+              </label>
               <select
                 aria-label="Filter status"
                 value={status}

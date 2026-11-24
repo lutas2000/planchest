@@ -101,7 +101,12 @@ export function Preview({
             className="frame-space"
             style={{ width: v.width * scale, height: v.height * scale }}
           >
-            {viewports.length > 1 && <span className="tag">{v.label}</span>}
+            {viewports.length > 1 && (
+              <span className="tag">
+                <b>{v.label}</b>
+                {v.width} × {v.height}
+              </span>
+            )}
             {frame(index, {
               width: v.width,
               height: v.height,
