@@ -5,6 +5,7 @@ import {
   changedContext,
   fire,
   matchingPreset,
+  sameType,
   stable,
 } from "../../src/machine";
 import type { Context, Field, Machine, Snapshot } from "../../src/machine";
@@ -298,7 +299,7 @@ function FieldRow({
   if (field?.options?.length) {
     const values = field.options.map((o) => o.value);
     input = (
-      <select value={String(value ?? "")} onChange={(e) => onChange(e.target.value)}>
+      <select value={String(value ?? "")} onChange={(e) => onChange(sameType(e.target.value, value))}>
         {!values.includes(String(value ?? "")) && <option value={String(value ?? "")}>{String(value ?? "")}</option>}
         {field.options.map((o) => (
           <option key={o.value} value={o.value}>

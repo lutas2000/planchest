@@ -8,6 +8,7 @@ import {
   matchingPreset,
   readMachine,
   sameSnapshot,
+  sameType,
 } from "../src/machine.ts";
 import { shotSnapshot } from "../src/shots.ts";
 
@@ -66,4 +67,12 @@ test("a screenshot's preset, state and context apply in that order", () => {
   assert.throws(() => shotSnapshot({ ...shot, preset: "nope" }, report), /no preset "nope"/);
   assert.throws(() => shotSnapshot({ ...shot, state: "nope" }, report), /no state "nope"/);
   assert.throws(() => shotSnapshot({ ...shot, state: "idle" }, undefined), /reports no state machine/);
+});
+
+test("an option keeps the type of the context value it replaces", () => {
+  assert.equal(sameType("9", 1), 9);
+  assert.equal(sameType("false", true), false);
+  assert.equal(sameType("lost", "good"), "lost");
+  assert.equal(sameType("many", 1), "many");
+  assert.equal(sameType("", 1), "");
 });

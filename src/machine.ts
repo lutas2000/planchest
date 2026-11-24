@@ -162,3 +162,14 @@ export function changedContext(defaults: Context, context: Context): Context {
 export function matchingPreset(defaults: Snapshot, presets: Preset[], snapshot: Snapshot) {
   return presets.find((p) => sameSnapshot(applyPreset(defaults, p), snapshot));
 }
+
+/**
+ * An option's value (always text) as the type of the value it replaces, so
+ * choosing "9" for a number in the context keeps it a number.
+ */
+export function sameType(option: string, like: unknown): unknown {
+  if (typeof like === "number" && option.trim() !== "" && Number.isFinite(Number(option)))
+    return Number(option);
+  if (typeof like === "boolean" && (option === "true" || option === "false")) return option === "true";
+  return option;
+}
