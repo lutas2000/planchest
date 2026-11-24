@@ -44,6 +44,8 @@ function readContext(raw: string | null): Context {
 // What a page's machine is, apart from its current snapshot.
 const definition = (m: Machine) =>
   stable({ states: m.states, transitions: m.transitions, presets: m.presets, fields: m.fields });
+// How long after a snapshot is sent a different report still counts as its echo.
+const ECHO_WINDOW = 1000;
 // How long before a reload's load event its first report may arrive.
 const RELOAD_WINDOW = 3000;
 function readRoute() {
@@ -84,9 +86,9 @@ function App() {
   const [steps, setSteps] = useState<Step[]>([]);
   const frames = useRef<(HTMLIFrameElement | null)[]>([]);
   // Per frame: the snapshot it last reported or was sent, and snapshots sent
-  // but not yet echoed back, so a late echo is not taken for a change.
+  // but not yet echoed back (with when), so a late echo is not taken for a change.
   const known = useRef(new WeakMap<HTMLIFrameElement, string>());
-  const pending = useRef(new WeakMap<HTMLIFrameElement, string[]>());
+  const pending = useRef(new WeakMap<HTMLIFrameElement, { key: string; at: number }[]>());
   // Per frame: how often it has loaded, its last report and the machine it
   // reported first, so a reload or a link followed inside the frame is told
   // apart from a step the page took. `pageMove` is the last such step.
@@ -173,7 +175,10 @@ function App() {
     const key = stable(snap);
     if (known.current.get(frame) === key) return;
     known.current.set(frame, key);
-    pending.current.set(frame, [...(pending.current.get(frame) ?? []), key].slice(-20));
+    pending.current.set(
+      frame,
+      [...(pending.current.get(frame) ?? []), { key, at: performance.now() }].slice(-20),
+    );
     frame.contentWindow?.postMessage(
       { type: "planchest:state", state: snap.state, context: snap.context, ...(restore && { restore }) },
       "*",
@@ -273,13 +278,21 @@ function App() {
       }
       // A newly loaded frame takes the snapshot kept in the hash.
       if (fresh) return send(frame, want, true);
-      // An echo of something the Viewer sent earlier is not a change.
+      // An echo of something the Viewer sent earlier is not a change. A page
+      // may report back a little more or less than it was sent (a value it
+      // rounds, a key it works out), so the next report soon after a send
+      // counts as that send's echo even when it differs.
       const sent = pending.current.get(frame) ?? [];
-      const at = sent.indexOf(key);
+      const at = sent.findIndex((s) => s.key === key);
       if (at >= 0) {
         pending.current.set(frame, sent.slice(at + 1));
         return;
       }
+      if (sent.length && performance.now() - sent[0].at < ECHO_WINDOW) {
+        pending.current.set(frame, sent.slice(1));
+        return;
+      }
+      pending.current.delete(frame);
       // Otherwise the page moved by itself, such as a tap on its own button.
       const before = want;
       pageMove.current = { frame, key, before, at: performance.now() };

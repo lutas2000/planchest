@@ -95,6 +95,21 @@ test("the Viewer drives a page's state machine and keeps the snapshot in its has
     assert.deepEqual(await hash(page), before);
     assert.equal(await panel.locator(".history li").count(), 0);
 
+    // A page that reports back a little more than it was sent (here, a key it
+    // works out) is still echoing the Viewer, not taking a step of its own.
+    await frame().evaluate(() => {
+      const viewer = parent;
+      (window as any).parent = {
+        postMessage: (data: any, origin: string) =>
+          viewer.postMessage({ ...data, context: { ...data.context, derived: true } }, origin),
+      };
+    });
+    await panel.locator(".presets button", { hasText: "Just started" }).click();
+    await frame().locator('[data-bind="distance"]', { hasText: "0.18" }).waitFor();
+    await page.waitForTimeout(100);
+    assert.equal(await panel.locator(".history li").count(), 1);
+    assert.match(await panel.locator(".history li").first().innerText(), /Just started/);
+
     // Compare: every frame shows the same snapshot.
     await page.getByRole("button", { name: "Compare" }).click();
     await page.waitForFunction(() => document.querySelectorAll("iframe").length > 1);
