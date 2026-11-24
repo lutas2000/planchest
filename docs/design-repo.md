@@ -62,7 +62,8 @@ product-a/
 │   └── make-report-page/      #   concept, prototype, review, diff) come from the Planchest plugin
 │
 ├── flows/                     # Cross-platform user journeys; every prototype page maps back to one
-│   ├── sitemap.html           # Map of every screen, linked to the pages that exist; written by organize
+│   ├── sitemap.html           # Flow map of every screen plus screenshots of each step; written by organize
+│   ├── shots/                 # Screenshots for the sitemap, rendered by planchest shots
 │   └── onboarding/FLOW.md
 │
 ├── web/

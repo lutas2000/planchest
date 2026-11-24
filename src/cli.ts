@@ -4,6 +4,7 @@ import { parseArgs } from "node:util";
 import { diff } from "./diff/index.ts";
 import { serve } from "./diff/serve.ts";
 import { publishViewer } from "./viewer/index.ts";
+import { DEFAULT_SITEMAP, takeShots } from "./shots.ts";
 import { DOCS, docNames, init } from "./init.ts";
 
 const DEFAULT_OUT = ".planchest/diff";
@@ -18,6 +19,7 @@ Usage
   planchest diff <a> <b> [options]   compare two versions of design pages
   planchest view [dir] [--build]    browse a design repo (or export with --build)
   planchest serve [dir] [--port N]   serve a report directory
+  planchest shots [dir]              render the screenshots the sitemap asks for
   planchest --version
 
 Each side of a diff is a directory, a git ref, or <ref>:<path>:
@@ -33,6 +35,10 @@ Options for diff
   --serve           serve the report after writing it
   --port <n>        port for --serve (default ${DEFAULT_PORT})
   --json            print report.json to stdout instead of a summary
+
+Options for shots
+  --sitemap <file>  the page whose <img data-shot> to render (default ${DEFAULT_SITEMAP})
+                    needs Playwright, or PLANCHEST_BROWSER set to a Chromium executable
 `;
 
 function version(): string {
@@ -59,6 +65,7 @@ async function main(argv: string[]) {
       port: { type: "string" },
       json: { type: "boolean" },
       build: { type: "boolean" },
+      sitemap: { type: "string" },
     },
   });
 
@@ -142,6 +149,20 @@ async function main(argv: string[]) {
     const doc = name.replace(/\.md$/, "");
     if (!names.includes(doc)) fail(`no document "${name}"; available: ${names.join(", ")}`);
     process.stdout.write(readFileSync(resolve(DOCS, doc + ".md"), "utf8"));
+    return;
+  }
+
+  if (command === "shots") {
+    const [dir, extra] = rest;
+    if (extra) fail(`unexpected argument "${extra}"`);
+    const root = resolve(cwd, dir ?? ".");
+    let shots;
+    try {
+      shots = await takeShots(root, values.sitemap ?? DEFAULT_SITEMAP, (line) => process.stdout.write(line + "\n"));
+    } catch (err) {
+      fail(err instanceof Error ? err.message : String(err));
+    }
+    process.stdout.write(`${shots.length} screenshot${shots.length === 1 ? "" : "s"}\n`);
     return;
   }
 

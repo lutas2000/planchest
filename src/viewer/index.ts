@@ -176,6 +176,8 @@ export function buildCatalog(
       ].includes(ext)
     )
       continue;
+    // Flow map screenshots are assets of flows/sitemap.html, not entries.
+    if (file.startsWith("flows/shots/")) continue;
     const text = [".html", ".htm", ".md"].includes(ext)
       ? readFileSync(join(root, file), "utf8")
       : "";
