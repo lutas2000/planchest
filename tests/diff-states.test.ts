@@ -12,6 +12,7 @@ import { chromium } from "playwright";
 import type { Browser } from "playwright";
 import { diff, diffWithStates } from "../src/diff/index.ts";
 import { serve } from "../src/diff/serve.ts";
+import { looksSame } from "../src/diff/states.ts";
 
 const example = new URL("../examples/stride/b/", import.meta.url).pathname;
 const PAGE = "prototypes/run/active.html";
@@ -112,5 +113,30 @@ test("--no-states and pages without a state machine never need a browser", async
     assert.deepEqual(diff("a", "b", { cwd: dir, out: join(dir, "sync") }).comparison.counts, plain.comparison.counts);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("screenshots that differ only by rendering noise look the same", async (t) => {
+  let browser: Browser;
+  try {
+    browser = await chromium.launch(
+      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
+    );
+  } catch {
+    t.skip("Chromium is not installed");
+    return;
+  }
+  try {
+    const page = await browser.newPage({ viewport: { width: 40, height: 40 } });
+    const shot = async (color: string) => {
+      await page.setContent(`<body style="margin:0;background:${color}">`);
+      return page.screenshot();
+    };
+    const base = await shot("rgb(100, 100, 100)");
+    assert.ok(await looksSame(page, base, base));
+    assert.ok(await looksSame(page, base, await shot("rgb(104, 100, 100)")));
+    assert.equal(await looksSame(page, base, await shot("rgb(160, 100, 100)")), false);
+  } finally {
+    await browser.close();
   }
 });

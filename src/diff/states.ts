@@ -1,10 +1,10 @@
 // Compare the states of pages that have a state machine. Each side's page
 // is loaded in headless Chromium, shown in its default snapshot and in each
-// preset, and screenshotted; a state whose screenshots differ is changed.
+// preset, and screenshotted; a state whose screenshots differ by more than
+// rendering noise is changed.
 // Only pages whose HTML mentions `planchest:machine` are loaded, so a repo
 // without state machines never needs a browser.
 
-import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { captureMachine, launchBrowser } from "../browser.ts";
@@ -17,11 +17,43 @@ import { serve } from "./serve.ts";
 /** The id of the page's own first snapshot among a page's states. */
 export const DEFAULT_STATE = "default";
 const FALLBACK_VIEWPORT = { width: 1280, height: 800 };
+/** How far one colour channel may differ before a pixel counts as changed. */
+const CHANNEL_TOLERANCE = 24;
+/** How long to wait for images a state shows before taking the screenshot. */
+const IMAGE_TIMEOUT = 2000;
 
 interface Rendered {
   label?: string;
   snapshot: Snapshot;
-  hash: string;
+  png: Buffer;
+}
+
+/**
+ * Whether two screenshots look the same: the same size, and no pixel with a
+ * channel more than CHANNEL_TOLERANCE apart, so anti-aliasing and colour
+ * rounding are not taken for a change. `page` is any page of the browser,
+ * used to decode them.
+ */
+export async function looksSame(page: any, a: Buffer, b: Buffer): Promise<boolean> {
+  if (a.equals(b)) return true;
+  return page.evaluate(
+    async ([a, b, tolerance]: [string, string, number]) => {
+      const decode = async (b64: string) => {
+        const blob = await (await fetch("data:image/png;base64," + b64)).blob();
+        const image = await createImageBitmap(blob);
+        const canvas = new OffscreenCanvas(image.width, image.height);
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(image, 0, 0);
+        return ctx.getImageData(0, 0, image.width, image.height);
+      };
+      const [da, db] = await Promise.all([decode(a), decode(b)]);
+      if (da.width !== db.width || da.height !== db.height) return false;
+      for (let i = 0; i < da.data.length; i++)
+        if (Math.abs(da.data[i] - db.data[i]) > tolerance) return false;
+      return true;
+    },
+    [a.toString("base64"), b.toString("base64"), CHANNEL_TOLERANCE],
+  );
 }
 
 /** Every state worth comparing on one side: the default, then each preset. */
@@ -73,6 +105,8 @@ export async function compareStates(
   const browser = await launchBrowser(root);
   const { server, url } = await serve(out, 0);
   try {
+    // Decodes screenshots to compare them.
+    const decoder = await browser.newPage();
     for (const p of candidates) {
       const rendered: Partial<Record<"a" | "b", Map<string, Rendered>>> = {};
       for (const side of sides(p)) {
@@ -87,7 +121,7 @@ export async function compareStates(
           if (!machine) continue;
           const map = new Map<string, Rendered>();
           for (const s of statesOf(machine)) {
-            await page.evaluate(async (snap: Snapshot) => {
+            await page.evaluate(async ([snap, imageTimeout]: [Snapshot, number]) => {
               // Wait for the page's report of the new snapshot, or give up quietly.
               const echoed = new Promise<void>((done) => {
                 const on = (e: MessageEvent) => {
@@ -101,14 +135,24 @@ export async function compareStates(
               postMessage({ type: "planchest:state", state: snap.state, context: snap.context }, "*");
               await echoed;
               await document.fonts.ready;
+              // Images the state shows, so a slow one is not a difference.
+              await Promise.race([
+                Promise.all(
+                  [...document.images].map(
+                    (img) =>
+                      img.complete ||
+                      new Promise((r) => {
+                        img.addEventListener("load", r, { once: true });
+                        img.addEventListener("error", r, { once: true });
+                      }),
+                  ),
+                ),
+                new Promise((r) => setTimeout(r, imageTimeout)),
+              ]);
               await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-            }, s.snapshot);
+            }, [s.snapshot, IMAGE_TIMEOUT]);
             const png = await page.screenshot({ fullPage: true, animations: "disabled" });
-            map.set(s.id, {
-              label: s.label,
-              snapshot: s.snapshot,
-              hash: createHash("sha1").update(png).digest("hex"),
-            });
+            map.set(s.id, { label: s.label, snapshot: s.snapshot, png });
           }
           rendered[side] = map;
         } finally {
@@ -118,17 +162,19 @@ export async function compareStates(
       const { a, b } = rendered;
       if (!a && !b) continue;
       const ids = [...new Set([...(a?.keys() ?? []), ...(b?.keys() ?? [])])];
-      p.states = ids.map((id) => {
+      p.states = [];
+      for (const id of ids) {
         const ra = a?.get(id), rb = b?.get(id);
-        const change: Change = !ra ? "added" : !rb ? "removed" : ra.hash === rb.hash ? "unchanged" : "changed";
-        return {
+        const change: Change =
+          !ra ? "added" : !rb ? "removed" : (await looksSame(decoder, ra.png, rb.png)) ? "unchanged" : "changed";
+        p.states.push({
           id,
           change,
           ...((rb ?? ra)!.label && { label: (rb ?? ra)!.label }),
           ...(ra && { a: ra.snapshot }),
           ...(rb && { b: rb.snapshot }),
-        };
-      });
+        });
+      }
       // Same HTML can still look different, such as after a token change.
       if (p.change === "unchanged" && p.states.some((s) => s.change !== "unchanged")) {
         comparison.counts.unchanged--;
