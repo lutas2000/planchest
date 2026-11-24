@@ -7,6 +7,9 @@ import { defineConfig } from "vite";
 import type { Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 
+/** `s` as a literal inside a RegExp. */
+const literal = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 function inline(): Plugin {
   return {
     name: "planchest-inline",
@@ -20,12 +23,12 @@ function inline(): Plugin {
           // `</script` inside the code would end the inline block early.
           const code = file.code.replace(/<\/script/gi, "<\\/script");
           html = html.replace(
-            new RegExp(`<script type="module" crossorigin src="[^"]*${file.fileName}"></script>`),
+            new RegExp(`<script type="module" crossorigin src="[^"]*${literal(file.fileName)}"></script>`),
             () => `<script type="module">${code}</script>`,
           );
         } else if (name.endsWith(".css")) {
           html = html.replace(
-            new RegExp(`<link rel="stylesheet" crossorigin href="[^"]*${file.fileName}">`),
+            new RegExp(`<link rel="stylesheet" crossorigin href="[^"]*${literal(file.fileName)}">`),
             () => `<style>${String(file.source)}</style>`,
           );
         } else continue;
