@@ -1,0 +1,266 @@
+// Compare the states of pages that have a state machine. Each side's page
+// is loaded in headless Chromium, shown in its default snapshot and in each
+// preset, and screenshotted; a state whose screenshots differ by more than
+// rendering noise is changed.
+// Only pages that mention `planchest:machine`, in their HTML or in a local
+// script they load, are opened, so a repo without state machines never
+// needs a browser.
+
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, relative, resolve, isAbsolute } from "node:path";
+import { captureMachine, launchBrowser } from "../browser.ts";
+import { applyPreset, DEFAULT_PRESET, readMachine } from "../machine.ts";
+import type { Machine, Snapshot } from "../machine.ts";
+import { readViewerConfig } from "../viewer/index.ts";
+import type { Change, Comparison, PageDiff, StateDiff } from "./compare.ts";
+import { serve } from "./serve.ts";
+
+/** The id of the page's own first snapshot among a page's states. */
+export const DEFAULT_STATE = DEFAULT_PRESET;
+const FALLBACK_VIEWPORT = { width: 1280, height: 800 };
+/** How far one colour channel may differ before a pixel counts as changed. */
+const CHANNEL_TOLERANCE = 24;
+/** How long to wait for images a state shows before taking the screenshot. */
+const IMAGE_TIMEOUT = 2000;
+
+interface Rendered {
+  label?: string;
+  snapshot: Snapshot;
+  png: Buffer;
+}
+
+/**
+ * Whether two screenshots look the same: the same size, and no pixel with a
+ * channel more than CHANNEL_TOLERANCE apart, so anti-aliasing and colour
+ * rounding are not taken for a change. `page` is any page of the browser,
+ * used to decode them.
+ */
+export async function looksSame(page: any, a: Buffer, b: Buffer): Promise<boolean> {
+  if (a.equals(b)) return true;
+  return page.evaluate(
+    async ([a, b, tolerance]: [string, string, number]) => {
+      const decode = async (b64: string) => {
+        const blob = await (await fetch("data:image/png;base64," + b64)).blob();
+        const image = await createImageBitmap(blob);
+        const canvas = new OffscreenCanvas(image.width, image.height);
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(image, 0, 0);
+        return ctx.getImageData(0, 0, image.width, image.height);
+      };
+      const [da, db] = await Promise.all([decode(a), decode(b)]);
+      if (da.width !== db.width || da.height !== db.height) return false;
+      for (let i = 0; i < da.data.length; i++)
+        if (Math.abs(da.data[i] - db.data[i]) > tolerance) return false;
+      return true;
+    },
+    [a.toString("base64"), b.toString("base64"), CHANNEL_TOLERANCE],
+  );
+}
+
+/** Every state worth comparing on one side: the default, then each preset. */
+export function statesOf(machine: Machine): { id: string; label?: string; snapshot: Snapshot }[] {
+  const defaults = { state: machine.state, context: machine.context };
+  return [
+    { id: DEFAULT_STATE, label: "Default", snapshot: defaults },
+    ...machine.presets.map((p) => ({
+      id: p.name,
+      label: p.label,
+      snapshot: applyPreset(defaults, p),
+    })),
+  ];
+}
+
+/** The viewport states are compared at: the Viewer's default, if B sets one. */
+export function stateViewport(root: string) {
+  try {
+    const config = readViewerConfig(root);
+    const v = config?.viewports?.find((v) => v.id === config.default) ?? config?.viewports?.[0];
+    if (v) return { width: v.width, height: v.height };
+  } catch {}
+  return FALLBACK_VIEWPORT;
+}
+
+const MARK = "planchest:machine";
+
+/**
+ * Whether `file` (relative to `root`) could post a state machine: its HTML,
+ * or a script inside `root` it loads with `<script src>`, mentions it.
+ */
+export function mentionsMachine(root: string, file: string): boolean {
+  const path = join(root, file);
+  if (!existsSync(path)) return false;
+  const html = readFileSync(path, "utf8");
+  if (html.includes(MARK)) return true;
+  for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']?([^"'\s>]+)/gi)) {
+    if (/^[a-z][\w+.-]*:|^\/\//i.test(src)) continue;
+    let script: string;
+    try {
+      const clean = decodeURIComponent(src.split(/[?#]/)[0]);
+      script = clean.startsWith("/") ? join(root, clean) : resolve(dirname(path), clean);
+    } catch {
+      continue;
+    }
+    const rel = relative(root, script);
+    if (rel.startsWith("..") || isAbsolute(rel) || !existsSync(script)) continue;
+    if (readFileSync(script, "utf8").includes(MARK)) return true;
+  }
+  return false;
+}
+
+const sides = (p: PageDiff) =>
+  (["a", "b"] as const).filter((s) => (s === "a" ? p.change !== "added" : p.change !== "removed"));
+
+/** How many pages are rendered at once. */
+const CONCURRENCY = 4;
+
+type Browser = any;
+type Side = "a" | "b";
+
+/** Renders every state of one side's page, or undefined when it reports no machine. */
+async function renderSide(
+  browser: Browser,
+  url: string,
+  viewport: { width: number; height: number },
+  side: Side,
+  file: string,
+): Promise<Map<string, Rendered> | undefined> {
+  const page = await browser.newPage({ viewport });
+  try {
+    await page.addInitScript(captureMachine);
+    await page.goto(`${url}${side}/${file.split("/").map(encodeURIComponent).join("/")}`, {
+      waitUntil: "load",
+    });
+    await page.waitForFunction(() => (window as any).__planchestMachine, undefined, { timeout: 2000 }).catch(() => {});
+    const machine = readMachine(await page.evaluate(() => (window as any).__planchestMachine));
+    if (!machine) return;
+    const map = new Map<string, Rendered>();
+    for (const s of statesOf(machine)) {
+      await page.evaluate(async ([snap, imageTimeout]: [Snapshot, number]) => {
+        // Wait for the page's report of the new snapshot, or give up quietly.
+        const echoed = new Promise<void>((done) => {
+          const on = (e: MessageEvent) => {
+            if (e.data?.type !== "planchest:machine") return;
+            removeEventListener("message", on);
+            done();
+          };
+          addEventListener("message", on);
+          setTimeout(done, 500);
+        });
+        postMessage({ type: "planchest:state", state: snap.state, context: snap.context }, "*");
+        await echoed;
+        await document.fonts.ready;
+        // Images the state shows, so a slow one is not a difference.
+        await Promise.race([
+          Promise.all(
+            [...document.images].map(
+              (img) =>
+                img.complete ||
+                new Promise((r) => {
+                  img.addEventListener("load", r, { once: true });
+                  img.addEventListener("error", r, { once: true });
+                }),
+            ),
+          ),
+          new Promise((r) => setTimeout(r, imageTimeout)),
+        ]);
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }, [s.snapshot, IMAGE_TIMEOUT]);
+      const png = await page.screenshot({ fullPage: true, animations: "disabled" });
+      map.set(s.id, { label: s.label, snapshot: s.snapshot, png });
+    }
+    return map;
+  } finally {
+    await page.close();
+  }
+}
+
+/** One page's states on both sides, or undefined when neither side reports a machine. */
+async function pageStates(
+  browser: Browser,
+  decoder: any,
+  url: string,
+  viewport: { width: number; height: number },
+  p: PageDiff,
+): Promise<StateDiff[] | undefined> {
+  const rendered: Partial<Record<Side, Map<string, Rendered>>> = {};
+  await Promise.all(
+    sides(p).map(async (side) => {
+      rendered[side] = await renderSide(browser, url, viewport, side, p.file);
+    }),
+  );
+  const { a, b } = rendered;
+  if (!a && !b) return;
+  const ids = [...new Set([...(a?.keys() ?? []), ...(b?.keys() ?? [])])];
+  return Promise.all(
+    ids.map(async (id): Promise<StateDiff> => {
+      const ra = a?.get(id), rb = b?.get(id);
+      const change: Change =
+        !ra ? "added" : !rb ? "removed" : (await looksSame(decoder, ra.png, rb.png)) ? "unchanged" : "changed";
+      return {
+        id,
+        change,
+        ...((rb ?? ra)!.label && { label: (rb ?? ra)!.label }),
+        ...(ra && { a: ra.snapshot }),
+        ...(rb && { b: rb.snapshot }),
+      };
+    }),
+  );
+}
+
+/**
+ * Adds `states` to every page with a state machine, marks a page changed when
+ * one of its states looks different, and records how the states were
+ * compared. `out` is the report directory holding the two sides.
+ */
+export async function compareStates(
+  out: string,
+  comparison: Comparison,
+  /** Where to look for the design repo's own Playwright first. */
+  root = out,
+): Promise<void> {
+  const candidates = comparison.pages.filter((p) =>
+    sides(p).some((side) => mentionsMachine(join(out, side), p.file)),
+  );
+  const viewport = stateViewport(join(out, "b"));
+  comparison.states = { viewport };
+  if (!candidates.length) return;
+  const browser = await launchBrowser(root);
+  const { server, url } = await serve(out, 0);
+  try {
+    // Decodes screenshots to compare them.
+    const decoder = await browser.newPage();
+    // A few pages at a time, both sides of each at once. Applied only once
+    // every page is done, so a failure part way through leaves the
+    // comparison as the plain diff made it.
+    const results: (StateDiff[] | undefined)[] = new Array(candidates.length);
+    let next = 0;
+    let failed = false;
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, candidates.length) }, async () => {
+        while (!failed && next < candidates.length) {
+          const i = next++;
+          try {
+            results[i] = await pageStates(browser, decoder, url, viewport, candidates[i]);
+          } catch (err) {
+            failed = true;
+            throw err;
+          }
+        }
+      }),
+    );
+    candidates.forEach((p, i) => {
+      const states = results[i];
+      if (!states) return;
+      p.states = states;
+      // Same HTML can still look different, such as after a token change.
+      if (p.change === "unchanged" && states.some((s) => s.change !== "unchanged")) {
+        comparison.counts.unchanged--;
+        comparison.counts.changed++;
+        p.change = "changed";
+      }
+    });
+  } finally {
+    server.close();
+    await browser.close();
+  }
+}

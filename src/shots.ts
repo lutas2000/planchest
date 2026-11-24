@@ -4,11 +4,12 @@
 // PNG to the img's src, so the sitemap stays a plain static page.
 
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
 import { parse } from "parse5";
 import { serve } from "./diff/serve.ts";
+import { captureMachine, launchBrowser } from "./browser.ts";
+import { applyPreset, readMachine, readObject } from "./machine.ts";
+import type { Context, Snapshot } from "./machine.ts";
 
 export const DEFAULT_SITEMAP = "flows/sitemap.html";
 const DEFAULT_VIEWPORT = { width: 390, height: 844 };
@@ -20,8 +21,34 @@ export interface Shot {
   out: string;
   width: number;
   height: number;
-  /** Page controls to set first, from data-set="name=value; name=value". */
-  set: [string, string][];
+  /**
+   * The state machine snapshot to show first: data-preset picks a preset,
+   * data-state a state, and data-context (a JSON object) is merged over the
+   * context, in that order.
+   */
+  preset?: string;
+  state?: string;
+  context?: Context;
+}
+
+/** The snapshot a shot asks for, on top of the page's report. */
+export function shotSnapshot(shot: Shot, data: unknown): Snapshot | undefined {
+  if (!shot.preset && !shot.state && !shot.context) return;
+  const machine = readMachine(data);
+  if (!machine) throw new Error(`${shot.page} reports no state machine, so data-preset, data-state and data-context have nothing to set`);
+  let snap: Snapshot = { state: machine.state, context: machine.context };
+  if (shot.preset) {
+    const preset = machine.presets.find((p) => p.name === shot.preset);
+    if (!preset) throw new Error(`${shot.page} has no preset "${shot.preset}"`);
+    snap = applyPreset(snap, preset);
+  }
+  if (shot.state) {
+    if (!machine.states.some((s) => s.id === shot.state))
+      throw new Error(`${shot.page} has no state "${shot.state}"`);
+    snap = { ...snap, state: shot.state };
+  }
+  if (shot.context) snap = { ...snap, context: { ...snap.context, ...shot.context } };
+  return snap;
 }
 
 function attr(node: any, name: string): string | undefined {
@@ -57,11 +84,19 @@ export function collectShots(root: string, sitemap = DEFAULT_SITEMAP): Shot[] {
         throw new Error(`data-shot="${page}" must use relative paths`);
       const out = decodeURIComponent(png.pathname.slice(1));
       if (!inside(root, resolve(root, out))) throw new Error(`${src} is outside the repo`);
-      const set = (attr(node, "data-set") ?? "")
-        .split(";")
-        .map((pair) => pair.split("=").map((s) => s.trim()))
-        .filter((pair): pair is [string, string] => pair.length === 2 && !!pair[0]);
-      shots.push({ page: target.pathname.slice(1) + target.hash, out, ...size, set });
+      if (attr(node, "data-set") !== undefined)
+        throw new Error(`data-shot="${page}": data-set is gone; use data-preset, data-state or data-context`);
+      const shot: Shot = { page: target.pathname.slice(1) + target.hash, out, ...size };
+      const preset = attr(node, "data-preset")?.trim(), state = attr(node, "data-state")?.trim();
+      if (preset) shot.preset = preset;
+      if (state) shot.state = state;
+      const context = attr(node, "data-context");
+      if (context !== undefined) {
+        const value = readObject(context);
+        if (!value) throw new Error(`data-shot="${page}": data-context must be a JSON object`);
+        shot.context = value;
+      }
+      shots.push(shot);
     }
     node.childNodes?.forEach((child: any) => walk(child, size));
     if (node.content) walk(node.content, size);
@@ -69,11 +104,6 @@ export function collectShots(root: string, sitemap = DEFAULT_SITEMAP): Shot[] {
   walk(parse(readFileSync(file, "utf8")), DEFAULT_VIEWPORT);
   return shots;
 }
-
-const INSTALL =
-  "screenshots need Playwright: run `npm install --save-dev playwright` and " +
-  "`npx playwright install chromium` in the design repo, or set " +
-  "PLANCHEST_BROWSER to a Chromium executable";
 
 /**
  * Renders the sitemap's screenshots. A page section (`#id` naming a
@@ -87,33 +117,13 @@ export async function takeShots(
   root = resolve(root);
   const shots = collectShots(root, sitemap);
   if (!shots.length) return shots;
-  // Playwright is optional and only needed here: take the design repo's
-  // own copy first, then one installed next to planchest.
-  let chromium;
-  const pick = (mod: any) => mod.chromium ?? mod.default?.chromium;
-  try {
-    const local = createRequire(join(root, "package.json")).resolve("playwright");
-    chromium = pick(await import(pathToFileURL(local).href));
-  } catch {}
-  if (!chromium) {
-    try {
-      const name = "playwright";
-      chromium = pick(await import(name));
-    } catch {}
-  }
-  if (!chromium) throw new Error(INSTALL);
-  let browser;
-  try {
-    browser = await chromium.launch(
-      process.env.PLANCHEST_BROWSER ? { executablePath: process.env.PLANCHEST_BROWSER } : {},
-    );
-  } catch (err) {
-    throw new Error(`${INSTALL}\n${err instanceof Error ? err.message.split("\n")[0] : err}`);
-  }
+  const browser = await launchBrowser(root);
   const { server, url } = await serve(root, 0);
   try {
     for (const shot of shots) {
       const page = await browser.newPage({ viewport: { width: shot.width, height: shot.height } });
+      // At the top level a page's report to its parent comes back to itself.
+      await page.addInitScript(captureMachine);
       await page.goto(new URL(shot.page, url).href, { waitUntil: "load" });
       const section = decodeURIComponent(new URL(shot.page, url).hash.slice(1));
       if (section)
@@ -123,13 +133,19 @@ export async function takeShots(
           for (const s of all) if (s.getAttribute("data-page") !== id) (s as HTMLElement).style.display = "none";
           scrollTo(0, 0);
         }, section);
-      for (const [name, value] of shot.set)
+      let snap: Snapshot | undefined;
+      if (shot.preset || shot.state || shot.context) {
+        await page
+          .waitForFunction(() => (window as any).__planchestMachine, undefined, { timeout: 2000 })
+          .catch(() => {});
+        snap = shotSnapshot(shot, await page.evaluate(() => (window as any).__planchestMachine));
         await page.evaluate(
-          ([name, value]: string[]) => postMessage({ type: "planchest:set", name, value }, "*"),
-          [name, value],
+          (s: Snapshot) => postMessage({ type: "planchest:state", state: s.state, context: s.context }, "*"),
+          snap!,
         );
+      }
       await page.evaluate(() => document.fonts.ready);
-      await page.waitForTimeout(shot.set.length ? 300 : 100);
+      await page.waitForTimeout(snap ? 300 : 100);
       mkdirSync(dirname(join(root, shot.out)), { recursive: true });
       await page.screenshot({ path: join(root, shot.out) });
       await page.close();

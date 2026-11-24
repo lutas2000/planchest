@@ -27,6 +27,8 @@ type Mode = "side" | "swipe" | "onion";
 interface Selection {
   file: string;
   section: string | null;
+  /** A state of the page's state machine: "default" or a preset name. */
+  state?: string | null;
 }
 
 const modes: Option<Mode>[] = [
@@ -44,12 +46,23 @@ const zooms: Option<string>[] = [
 const GAP = 16;
 
 /**
- * "#file" or "#file:section"; the sidebar writes each part URL-encoded,
- * summary links may not. Null when the hash names no known page.
+ * "#file", "#file:section" or "#file@state"; the sidebar writes each part
+ * URL-encoded, summary links may not. Null when the hash names no known page.
  */
 function readHash(): Selection | null {
-  const raw = location.hash.slice(1);
+  let raw = location.hash.slice(1);
   if (!raw) return null;
+  let state: string | null = null;
+  const at = raw.lastIndexOf("@");
+  if (at >= 0) {
+    try {
+      const file = decodeURIComponent(raw.slice(0, at)), id = decodeURIComponent(raw.slice(at + 1));
+      if (cmp.pages.find((p) => p.file === file)?.states?.some((s) => s.id === id)) {
+        state = id;
+        raw = raw.slice(0, at);
+      }
+    } catch {}
+  }
   const i = raw.indexOf(":");
   let file: string, section: string | null;
   try {
@@ -58,7 +71,18 @@ function readHash(): Selection | null {
   } catch {
     return null;
   }
-  return cmp.pages.some((p) => p.file === file) ? { file, section } : null;
+  return cmp.pages.some((p) => p.file === file) ? { file, section, state } : null;
+}
+
+function writeHash(s: Selection) {
+  history.replaceState(
+    null,
+    "",
+    "#" +
+      encodeURIComponent(s.file) +
+      (s.section ? ":" + encodeURIComponent(s.section) : "") +
+      (s.state ? "@" + encodeURIComponent(s.state) : ""),
+  );
 }
 
 function initialSelection(): Selection | null {
@@ -92,13 +116,9 @@ function App() {
     window.addEventListener("hashchange", change);
     return () => window.removeEventListener("hashchange", change);
   }, []);
-  const select = (file: string, section: string | null) => {
-    setSelection({ file, section });
-    history.replaceState(
-      null,
-      "",
-      "#" + encodeURIComponent(file) + (section ? ":" + encodeURIComponent(section) : ""),
-    );
+  const select = (next: Selection) => {
+    setSelection(next);
+    writeHash(next);
   };
 
   return (
@@ -162,10 +182,10 @@ function FileList({
   onSelect,
 }: {
   selection: Selection | null;
-  onSelect: (file: string, section: string | null) => void;
+  onSelect: (selection: Selection) => void;
 }) {
-  const current = (file: string, section: string | null) =>
-    selection?.file === file && selection.section === section;
+  const current = (file: string, section: string | null, state: string | null = null) =>
+    selection?.file === file && selection.section === section && (selection.state ?? null) === state;
   const page = (p: PageDiff) => {
     const status = p.status && (p.status.b || p.status.a);
     return [
@@ -174,7 +194,7 @@ function FileList({
         className={"item " + p.change}
         title={p.title || p.file}
         aria-current={current(p.file, null)}
-        onClick={() => onSelect(p.file, null)}
+        onClick={() => onSelect({ file: p.file, section: null })}
       >
         {status && <span className="status">{status}</span>}
         {p.file.split("/").flatMap((part, i) => (i ? [<wbr key={i} />, "/" + part] : [part]))}
@@ -184,11 +204,32 @@ function FileList({
           key={p.file + "#" + s.id}
           className={"item section " + s.change}
           aria-current={current(p.file, s.id)}
-          onClick={() => onSelect(p.file, s.id)}
+          onClick={() => onSelect({ file: p.file, section: s.id })}
         >
           #{s.id}
         </button>
       )),
+      // Only the states that look different; the rest are counted.
+      ...(p.states ?? [])
+        .filter((s) => s.change !== "unchanged")
+        .map((s) => (
+          <button
+            key={p.file + "@" + s.id}
+            className={"item section state " + s.change}
+            aria-current={current(p.file, null, s.id)}
+            title={s.label && s.label !== s.id ? s.id : undefined}
+            onClick={() => onSelect({ file: p.file, section: null, state: s.id })}
+          >
+            @{s.label ?? s.id}
+          </button>
+        )),
+      ...(p.states?.some((s) => s.change === "unchanged")
+        ? [
+            <div key={p.file + "@same"} className="same">
+              {p.states.filter((s) => s.change === "unchanged").length} states look the same
+            </div>,
+          ]
+        : []),
     ];
   };
   const groups = [
@@ -199,6 +240,9 @@ function FileList({
   const unchanged = cmp.pages.filter((p) => p.change === "unchanged");
   return (
     <nav aria-label="Changed files">
+      {cmp.states?.skipped && (
+        <p className="note">States were not compared: {cmp.states.skipped}</p>
+      )}
       {groups.map(([key, title]) => {
         const pages = cmp.pages.filter((p) => p.change === key);
         return (
@@ -283,6 +327,11 @@ function Stage({ selection }: { selection: Selection | null }) {
     exists.a &&= section.change !== "added";
     exists.b &&= section.change !== "removed";
   }
+  const state = page?.states?.find((s) => s.id === selection?.state);
+  if (state) {
+    exists.a &&= !!state.a;
+    exists.b &&= !!state.b;
+  }
 
   // Hide every other `data-page` section, and mirror scrolling to the
   // other side while Sync scroll is on.
@@ -295,6 +344,13 @@ function Stage({ selection }: { selection: Selection | null }) {
       return;
     }
     if (!doc || !iframe) return;
+    // Show the selected state: the page renders the snapshot it is sent.
+    const snap = state?.[side];
+    if (snap)
+      doc.defaultView?.postMessage(
+        { type: "planchest:state", state: snap.state, context: snap.context },
+        "*",
+      );
     if (selection?.section) {
       const style = doc.createElement("style");
       style.textContent =
@@ -383,7 +439,10 @@ function Stage({ selection }: { selection: Selection | null }) {
           />
         </label>
         <span className="path">
-          {selection && selection.file + (selection.section ? " #" + selection.section : "")}
+          {selection &&
+            selection.file +
+              (selection.section ? " #" + selection.section : "") +
+              (state ? " @" + (state.label ?? state.id) : "")}
         </span>
       </div>
       <div className={stageClass} style={stageStyle} ref={stage}>
@@ -422,7 +481,7 @@ function Stage({ selection }: { selection: Selection | null }) {
                 >
                   <iframe
                     // A new section needs a fresh load to hide the others.
-                    key={selection.file + "#" + (selection.section ?? "")}
+                    key={selection.file + "#" + (selection.section ?? "") + "@" + (selection.state ?? "")}
                     ref={(el) => {
                       frames.current[side] = el;
                     }}

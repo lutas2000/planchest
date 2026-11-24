@@ -4,22 +4,12 @@ import type { Entry, Viewport } from "../../src/viewer/index";
 import { asset } from "./paths";
 import { ScaledBox } from "./shared/controls";
 
-/** One control a previewed page offers, such as its locale or state. */
-export interface PageControl {
-  name: string;
-  label?: string;
-  value: string;
-  options: { value: string; label?: string }[];
-}
-
 const GAP = 24;
 
 /**
  * Renders one frame per viewport (several when comparing), or one frame that
- * fills the canvas. Pages talk to the Viewer with postMessage:
- *   page → Viewer  { type: "planchest:controls", controls: PageControl[] }
- *   Viewer → page  { type: "planchest:set", name, value, restore? }
- * `restore` marks values re-sent from the Viewer hash right after a load.
+ * fills the canvas. A page with a state machine talks to the Viewer with
+ * postMessage; see src/machine.ts.
  */
 export function Preview({
   entry,
@@ -34,7 +24,8 @@ export function Preview({
   fill: boolean;
   zoom: string;
   onFrames: (frames: (HTMLIFrameElement | null)[]) => void;
-  onFrameLoad: (index: number) => void;
+  /** Every load of a frame, including a reload or a link followed inside it. */
+  onFrameLoad: (frame: HTMLIFrameElement) => void;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const frames = useRef<(HTMLIFrameElement | null)[]>([]);
@@ -80,9 +71,9 @@ export function Preview({
         title={entry.title}
         src={asset(entry.file)}
         sandbox="allow-scripts allow-forms"
-        onLoad={() => {
+        onLoad={(e) => {
           setLoaded((l) => ({ ...l, [index]: true }));
-          onFrameLoad(index);
+          onFrameLoad(e.currentTarget);
         }}
       />
     </div>
