@@ -36,7 +36,7 @@ For browsing a single current design repository without comparison, use `planche
    ```
 
    Links use the report's own hash format: `#<file>` or `#<file>:<section>`.
-5. **Publish for the PR.** The report directory is self-contained: upload it as a CI artifact or to a preview host, or run `planchest serve` for a local review. Put the summary text and the report link in the PR description. Never commit `.planchest/` to the design repo.
+5. **Publish for the PR.** The report directory is self-contained: upload it as a CI artifact or to a preview host, or run `planchest serve` for a local review. Put the summary text and the report link in the PR description. Never commit `.planchest/` to the design repo. To do this on every PR automatically, set up CI with the `planchest-publish` skill.
 
 ## Reading the report page
 

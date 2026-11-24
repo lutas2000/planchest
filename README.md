@@ -7,7 +7,7 @@ Named after the plan chest: the wide, shallow-drawered cabinet where architects 
 ## What it is
 
 - **A repo layout** for design work done by agents: `DESIGN.md` (Stitch format) as the single source of visual truth, `CONTEXT.md` and `BRAND.md` for everything that is not a token, `system/` for materials, `concepts/` for free exploration, `prototypes/` for strict, developer-ready screens, `decisions/` for the decisions that outlive a pull request. Everything is self-contained HTML plus Markdown. See [docs/design-repo.md](docs/design-repo.md).
-- **Skills** that set up and work inside that repo: `planchest-init`, `planchest-organize`, `planchest-interview`, `planchest-concept`, `planchest-prototype`, `planchest-review`, `planchest-diff`, `planchest-conflict`, `planchest-view`.
+- **Skills** that set up and work inside that repo: `planchest-init`, `planchest-organize`, `planchest-interview`, `planchest-concept`, `planchest-prototype`, `planchest-review`, `planchest-diff`, `planchest-conflict`, `planchest-view`, `planchest-publish`.
 - **A diff tool**, `planchest diff`, that renders two versions of the pages side by side (or swipe, or onionskin) at any viewport, without spending a token. Two sides can be git refs, `ref:path`, or plain directories, so "main vs. this branch" and "dashboard-v1 vs. dashboard-v2" are the same command. The `planchest-diff` skill adds the human summary.
 
 Planchest does not depend on any design tool or canvas. Any agent that reads `AGENTS.md` can work in a Planchest repo. The skills ship as a Claude Code plugin and also work in other agents that load skills (see [Use with other agents](#use-with-other-agents)).
@@ -78,7 +78,11 @@ When two sources disagree, or a merge stops on conflicts in the design repo, `pl
 /planchest:planchest-conflict
 ```
 
-The report (`.planchest/diff/index.html`, git-ignored) has three panels: the changed, added and removed pages and `data-page` sections on the left; both sides of the selected page in the centre, with side-by-side, swipe and onionskin modes, viewport presets, zoom and scroll sync; and on the right `summary.html` from the same directory, which the `planchest-diff` skill writes. The side panels can be hidden. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR.
+The report (`.planchest/diff/index.html`, git-ignored) has three panels: the changed, added and removed pages and `data-page` sections on the left; both sides of the selected page in the centre, with side-by-side, swipe and onionskin modes, viewport presets, zoom and scroll sync; and on the right `summary.html` from the same directory, which the `planchest-diff` skill writes. The side panels can be hidden. `report.json` next to it is the machine-readable version. The directory is self-contained, so it can be uploaded as a CI artifact or to a preview host for the PR. `planchest-publish` sets up both on Cloudflare Pages behind Cloudflare Access: the library from `main` on every merge, and this report for every PR, linked in a PR comment and deleted when the PR closes:
+
+```
+/planchest:planchest-publish
+```
 
 ## Example
 
@@ -92,7 +96,7 @@ node bin/planchest.js diff examples/stride/a examples/stride/b --serve
 
 ## Status
 
-Version 0.2: the repo layout, the nine skills, `planchest view` for browsing current design material, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
+Version 0.2: the repo layout, the ten skills, `planchest view` for browsing current design material, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
 
 ## Develop
 

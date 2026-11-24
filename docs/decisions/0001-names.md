@@ -23,6 +23,7 @@ Planchest introduces a handful of names that users, agents and tools all have to
 | skill `organize` | `intake`, `gather` | Organize also covers every round after the first; intake only covers the first. |
 | `flows/sitemap.html` | `MAP.md`, `screens.md` | A sitemap is what designers call the map of a product's screens. HTML rather than Markdown so the diff report renders it and a reorganised navigation shows as a visual diff. |
 | skill `interview` | `wizard`, `questionnaire`, `setup` | A conversation that gets what is in someone's head into the repo. "Wizard" is a UI word; "setup" is what `init` does. |
+| skill `publish` | `deploy`, `preview`, `ci` | It puts the library and each PR's report where people can see them. "Deploy" and "CI" name the mechanism; "preview" covers only the PR half. Added 2026-11-24. |
 | skill `conflict` | `resolve`, `merge` | Named after the thing it handles, like `diff`. One procedure covers disagreements between sources and git conflicts; "merge" would claim only the second. |
 | `.planchest/` | | Local output directory inside a design repo, git-ignored. |
 | `onionskin` (report mode) | | From animation: the previous frame laid over the next to see the change. |
