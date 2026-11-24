@@ -12,7 +12,7 @@ import type { CSSProperties } from "react";
 import { createRoot } from "react-dom/client";
 import type { Report, SideInfo } from "../../../src/diff/report";
 import type { PageDiff } from "../../../src/diff/compare";
-import { PanelToggles, ScaledBox, Segmented } from "../shared/controls";
+import { PanelToggles, ScaledBox, Segmented, scaledSize } from "../shared/controls";
 import type { Option } from "../shared/controls";
 import { readStored, writeStored } from "../shared/storage";
 import "../shared/base.css";
@@ -405,7 +405,7 @@ function Stage({ selection }: { selection: Selection | null }) {
                   <div
                     key={side}
                     className="frame missing"
-                    style={{ width: Math.round(width * scale), height: Math.round(height * scale) }}
+                    style={scaledSize(width, height, scale)}
                   >
                     {tag}
                     {side === "a" ? "Not in A" : "Not in B"}

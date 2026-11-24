@@ -66,6 +66,11 @@ export function PanelToggles({ panels }: { panels: Panel[] }) {
   );
 }
 
+/** The on-screen size of a `width` × `height` box at `scale`. */
+export function scaledSize(width: number, height: number, scale: number) {
+  return { width: Math.round(width * scale), height: Math.round(height * scale) };
+}
+
 /**
  * A box that shows its content at `width` × `height` scaled by `scale`.
  * The content keeps its real size (so a page inside sees the real
@@ -92,10 +97,7 @@ export function ScaledBox({
   children: ReactNode;
 }) {
   return (
-    <div
-      className={className}
-      style={{ width: Math.round(width * scale), height: Math.round(height * scale) }}
-    >
+    <div className={className} style={scaledSize(width, height, scale)}>
       {overlay}
       <div
         className={innerClassName}
