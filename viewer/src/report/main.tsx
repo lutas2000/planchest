@@ -7,7 +7,7 @@
 // preview of the selected page on both sides; right, the summary. The left
 // and right panels can be hidden, and the preview can be zoomed.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { createRoot } from "react-dom/client";
 import type { Report, SideInfo } from "../../../src/diff/report";
@@ -442,6 +442,8 @@ function Stage({ selection }: { selection: Selection | null }) {
 /**
  * A number field that keeps what the user is typing and reports valid
  * numbers. With `commit`, it reports only on change (blur or Enter).
+ * On blur or Enter the field shows the value again, so a number the parent
+ * clamped or an entry it ignored does not stay on screen.
  */
 function NumberInput({
   value,
@@ -457,10 +459,17 @@ function NumberInput({
   step: number;
 }) {
   const [text, setText] = useState(String(value));
-  useEffect(() => setText(String(value)), [value]);
+  // Bumped on blur and Enter; the parent's clamped value may equal the old one.
+  const [settled, setSettled] = useState(0);
+  // Before paint, so the typed number never flashes after Enter.
+  useLayoutEffect(() => setText(String(value)), [value, settled]);
   const report = (raw: string) => {
     const n = Number(raw);
     if (raw && n) onChange(n);
+  };
+  const settle = () => {
+    if (commit) report(text);
+    setSettled((s) => s + 1);
   };
   return (
     <input
@@ -471,9 +480,9 @@ function NumberInput({
         setText(e.target.value);
         if (!commit) report(e.target.value);
       }}
-      onBlur={() => commit && report(text)}
+      onBlur={settle}
       onKeyDown={(e) => {
-        if (commit && e.key === "Enter") report(text);
+        if (e.key === "Enter") settle();
       }}
     />
   );
