@@ -17,7 +17,7 @@ A prototype is the deliverable. Everything in it must come from `system/`; every
    - If something is missing from the system, stop and add it to `system/` in its own PR (see `system/components/AGENTS.md`). Do not improvise it in the prototype.
 3. **Real copy, real states.** Text follows `BRAND.md`; terms follow `CONTEXT.md`. Build the empty, loading, error and success states the flow's edge cases call for. Fake data goes in `data.json` next to the pages.
 4. **One file per screen.** `prototypes/<flow>/<step>.html`. No `data-page` sections here; sections are for concepts.
-   If `flows/sitemap.html` exists, add, move or rename the screen's entry there in the same commit.
+   If `flows/sitemap.html` exists, add, move or rename the screen's node and step there in the same commit, then run `planchest shots` and commit the updated screenshots.
 5. **Write `SPEC.md`** from the template in `prototypes/README.md`: flow, source concept, screen table, acceptance checklist, decisions. Do not add a `status` field: a prototype is developer-ready by definition. Remove a legacy prototype status when revising it. Write `HANDOFF.md` with interaction details, exact copy, motion and boundary conditions in the same change.
 6. **Preview and review yourself** with the `planchest-view` skill to inspect the screen and adjacent SPEC at different viewports, then use `planchest-review` before opening the PR and fix what it finds.
 7. **Open a PR** with a Planchest diff (`planchest-diff` skill) against the base branch, scoped to the prototype directory. For a revision, the diff shows exactly which screens moved.
