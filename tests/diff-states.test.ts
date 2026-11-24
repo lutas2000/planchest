@@ -12,7 +12,7 @@ import { chromium } from "playwright";
 import type { Browser } from "playwright";
 import { diff, diffWithStates } from "../src/diff/index.ts";
 import { serve } from "../src/diff/serve.ts";
-import { looksSame } from "../src/diff/states.ts";
+import { looksSame, mentionsMachine } from "../src/diff/states.ts";
 
 const example = new URL("../examples/stride/b/", import.meta.url).pathname;
 const PAGE = "prototypes/run/active.html";
@@ -180,6 +180,25 @@ test("a failure part way through leaves the plain diff and says why", async (t) 
     assert.match(report.comparison.states?.skipped ?? "", /\S/);
     assert.ok(report.comparison.pages.every((p) => !p.states));
     assert.deepEqual(report.comparison.counts, plain.counts);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a state machine in a script the page loads is found too", () => {
+  const dir = mkdtempSync(join(tmpdir(), "planchest-states-"));
+  try {
+    mkdirSync(join(dir, "run", "lib"), { recursive: true });
+    writeFileSync(join(dir, "run", "lib", "machine.js"), 'parent.postMessage({ type: "planchest:machine" }, "*");');
+    writeFileSync(join(dir, "run", "a.html"), '<script src="lib/machine.js?v=1"></script>');
+    writeFileSync(join(dir, "run", "b.html"), "<script src=/run/lib/machine.js></script>");
+    writeFileSync(join(dir, "run", "c.html"), '<script src="https://example.com/x.js"></script>');
+    writeFileSync(join(dir, "run", "d.html"), '<script src="../../outside.js"></script>');
+    writeFileSync(join(dir, "run", "e.html"), "<p>planchest:machine</p>");
+    assert.deepEqual(
+      ["a", "b", "c", "d", "e", "missing"].map((f) => mentionsMachine(dir, `run/${f}.html`)),
+      [true, true, false, false, true, false],
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

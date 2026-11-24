@@ -2,11 +2,12 @@
 // is loaded in headless Chromium, shown in its default snapshot and in each
 // preset, and screenshotted; a state whose screenshots differ by more than
 // rendering noise is changed.
-// Only pages whose HTML mentions `planchest:machine` are loaded, so a repo
-// without state machines never needs a browser.
+// Only pages that mention `planchest:machine`, in their HTML or in a local
+// script they load, are opened, so a repo without state machines never
+// needs a browser.
 
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, relative, resolve, isAbsolute } from "node:path";
 import { captureMachine, launchBrowser } from "../browser.ts";
 import { applyPreset, DEFAULT_PRESET, readMachine } from "../machine.ts";
 import type { Machine, Snapshot } from "../machine.ts";
@@ -79,6 +80,33 @@ export function stateViewport(root: string) {
   return FALLBACK_VIEWPORT;
 }
 
+const MARK = "planchest:machine";
+
+/**
+ * Whether `file` (relative to `root`) could post a state machine: its HTML,
+ * or a script inside `root` it loads with `<script src>`, mentions it.
+ */
+export function mentionsMachine(root: string, file: string): boolean {
+  const path = join(root, file);
+  if (!existsSync(path)) return false;
+  const html = readFileSync(path, "utf8");
+  if (html.includes(MARK)) return true;
+  for (const [, src] of html.matchAll(/<script\b[^>]*\bsrc\s*=\s*["']?([^"'\s>]+)/gi)) {
+    if (/^[a-z][\w+.-]*:|^\/\//i.test(src)) continue;
+    let script: string;
+    try {
+      const clean = decodeURIComponent(src.split(/[?#]/)[0]);
+      script = clean.startsWith("/") ? join(root, clean) : resolve(dirname(path), clean);
+    } catch {
+      continue;
+    }
+    const rel = relative(root, script);
+    if (rel.startsWith("..") || isAbsolute(rel) || !existsSync(script)) continue;
+    if (readFileSync(script, "utf8").includes(MARK)) return true;
+  }
+  return false;
+}
+
 const sides = (p: PageDiff) =>
   (["a", "b"] as const).filter((s) => (s === "a" ? p.change !== "added" : p.change !== "removed"));
 
@@ -94,10 +122,7 @@ export async function compareStates(
   root = out,
 ): Promise<void> {
   const candidates = comparison.pages.filter((p) =>
-    sides(p).some((side) => {
-      const file = join(out, side, p.file);
-      return existsSync(file) && readFileSync(file, "utf8").includes("planchest:machine");
-    }),
+    sides(p).some((side) => mentionsMachine(join(out, side), p.file)),
   );
   const viewport = stateViewport(join(out, "b"));
   comparison.states = { viewport };
