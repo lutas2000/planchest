@@ -15,6 +15,8 @@ const groups = [
   "decisions",
   "sources",
 ];
+// Sentence case for collection and status names, which are lowercase ids.
+const label = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 // Used when the design repo's planchest.json does not list viewports.
 const defaultViewports: Viewport[] = [
   { id: "Mobile", label: "Mobile", width: 390, height: 844 },
@@ -256,7 +258,7 @@ function App() {
                 type="search"
                 ref={search}
                 aria-label="Search library"
-                placeholder="Search…  /"
+                placeholder="Search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -265,9 +267,11 @@ function App() {
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
               >
-                <option value="">Active · all statuses</option>
+                <option value="">All active</option>
                 {[...statuses, "archived"].map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {label(s)}
+                  </option>
                 ))}
               </select>
             </div>
@@ -284,7 +288,7 @@ function App() {
                 items.length > 0 && (
                   <section key={group}>
                     <h2>
-                      {group}
+                      {label(group)}
                       <span>{items.length}</span>
                     </h2>
                     {items.map((e) => (
@@ -304,7 +308,7 @@ function App() {
                 )
               );
             })}
-            {!entries.length && <p className="none">No matching files.</p>}
+            {!entries.length && <p className="none">No matching files</p>}
           </nav>
         )}
         <main>
@@ -337,7 +341,7 @@ function App() {
                           select(active.find((e) => e.kind === g)!.file);
                         }}
                       >
-                        <span>{g}</span>
+                        <span>{label(g)}</span>
                         <strong>{count}</strong>
                       </button>
                     )
@@ -498,7 +502,7 @@ function App() {
             {entry.spec ? (
               <Document file={entry.spec} onSelect={select} isEntry={isEntry} />
             ) : (
-              <p className="none">No adjacent specification.</p>
+              <p className="none">No adjacent specification</p>
             )}
             {entry.format === "html" && (
               <p className="none notice">

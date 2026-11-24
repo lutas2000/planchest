@@ -37,13 +37,13 @@ export const TEMPLATE = `<!doctype html>
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); display: grid; grid-template-rows: auto 1fr; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); font-variant-numeric: tabular-nums; display: grid; grid-template-rows: auto 1fr; }
 button { font: inherit; color: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
-header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+header h1 { font-size: 15px; margin: 0; font-weight: 500; }
 header .sides { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-header .sides b { color: var(--fg); font-weight: 600; }
+header .sides b { color: var(--fg); font-weight: 500; }
 header .counts { margin-left: auto; display: flex; gap: 12px; font-size: 12px; }
 .count { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .count.added { color: var(--added); border-color: currentColor; }
@@ -63,7 +63,7 @@ header .panels button[data-panel="summary"]::before { border-right-width: 4px; }
 main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; min-height: 0; }
 nav { width: var(--nav-w); border-right: 1px solid var(--line); overflow: auto; padding: 8px 0; background: var(--panel); }
 main[data-nav="off"] nav { display: none; }
-nav h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 16px 8px; font-weight: 600; }
+nav h2 { font-size: 12px; color: var(--muted); margin: 24px 16px 8px; font-weight: 500; }
 nav h2:first-child { margin-top: 8px; }
 nav button { display: block; width: 100%; text-align: left; border: 0; background: none; min-height: 32px; padding: 6px 16px 6px 32px; cursor: pointer; position: relative; overflow-wrap: anywhere; }
 nav button:hover { background: var(--hover); }
@@ -85,7 +85,7 @@ nav .files .added { color: var(--added); } nav .files .removed { color: var(--re
 
 aside { width: var(--summary-w); border-left: 1px solid var(--line); overflow: auto; padding: 0 16px 16px; background: var(--panel); }
 main[data-summary="off"] aside { display: none; }
-aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 24px 0 8px; }
+aside h2 { font-size: 12px; color: var(--muted); font-weight: 500; margin: 24px 0 8px; }
 aside h2:first-child { margin-top: 16px; }
 aside p, aside ul, aside ol { margin: 0 0 12px; }
 aside ul, aside ol { padding-left: 20px; }
@@ -104,7 +104,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
 .stage { position: relative; overflow: auto; padding: 16px; }
 .pair { position: relative; display: flex; gap: 16px; align-items: flex-start; width: max-content; margin: 0 auto; }
 .frame { position: relative; flex: 0 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.frame .tag { position: absolute; top: 0; left: 0; z-index: 2; font: 600 10px/1 var(--mono); padding: 4px 8px; background: var(--fg); color: var(--bg); border-bottom-right-radius: 6px; opacity: .85; pointer-events: none; }
+.frame .tag { position: absolute; top: 0; left: 0; z-index: 2; font: 500 11px/1 var(--mono); padding: 4px 8px; background: var(--fg); color: var(--bg); border-bottom-right-radius: 6px; opacity: .85; pointer-events: none; }
 .frame iframe { display: block; border: 0; background: #fff; transform-origin: 0 0; transform: scale(var(--zoom, 1)); }
 .frame.missing { display: grid; place-items: center; color: var(--muted); font-size: 12px; }
 .stage.overlay .pair .frame + .frame { position: absolute; top: 0; left: 0; }
@@ -158,7 +158,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
       <label id="opacity-label" hidden>opacity <input type="range" id="opacity" min="0" max="100" value="50"></label>
       <span class="path" id="path"></span>
     </div>
-    <div class="stage" id="stage"><div class="empty">Pick a page on the left.</div></div>
+    <div class="stage" id="stage"><div class="empty">Pick a page on the left</div></div>
   </section>
   <aside id="summary"><p class="none">No summary yet. The <code>diff</code> skill writes <code>summary.html</code> next to this page.</p></aside>
 </main>
@@ -219,7 +219,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
     html += "<details open><summary><h2>Other files (" + cmp.files.length + ")</h2></summary><div class=\\"files\\">" +
       cmp.files.map((f) => '<div class="' + f.change + '">' + esc(f.file) + "</div>").join("") + "</div></details>";
   }
-  if (!cmp.pages.length) html += '<div class="empty">No pages on either side.</div>';
+  if (!cmp.pages.length) html += '<div class="empty">No pages on either side</div>';
   nav.innerHTML = html;
 
   function pageButton(p) {
@@ -267,7 +267,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
       wrap.innerHTML = '<span class="tag">' + side.toUpperCase() + "</span>";
       if (!exists[side]) {
         wrap.classList.add("missing");
-        wrap.append(side === "a" ? "not in A" : "not in B");
+        wrap.append(side === "a" ? "Not in A" : "Not in B");
         pair.append(wrap);
         return { wrap, iframe: null };
       }
