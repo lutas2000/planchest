@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import type { Entry, Viewport } from "../../src/viewer/index";
 import { asset } from "./paths";
+import { ScaledBox } from "./shared/controls";
 
 /** One control a previewed page offers, such as its locale or state. */
 export interface PageControl {
@@ -96,23 +97,23 @@ export function Preview({
     <div className="stage" ref={box}>
       <div className="frames" style={{ gap: GAP * scale }}>
         {viewports.map((v, index) => (
-          <div
+          <ScaledBox
             key={v.id}
             className="frame-space"
-            style={{ width: v.width * scale, height: v.height * scale }}
+            width={v.width}
+            height={v.height}
+            scale={scale}
+            overlay={
+              viewports.length > 1 && (
+                <span className="tag">
+                  <b>{v.label}</b>
+                  {v.width} × {v.height}
+                </span>
+              )
+            }
           >
-            {viewports.length > 1 && (
-              <span className="tag">
-                <b>{v.label}</b>
-                {v.width} × {v.height}
-              </span>
-            )}
-            {frame(index, {
-              width: v.width,
-              height: v.height,
-              transform: `scale(${scale})`,
-            })}
-          </div>
+            {frame(index, { width: "100%", height: "100%" })}
+          </ScaledBox>
         ))}
       </div>
     </div>
