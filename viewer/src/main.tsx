@@ -41,6 +41,11 @@ function readContext(raw: string | null): Context {
     return {};
   }
 }
+// What a page's machine is, apart from its current snapshot.
+const definition = (m: Machine) =>
+  stable({ states: m.states, transitions: m.transitions, presets: m.presets, fields: m.fields });
+// How long before a reload's load event its first report may arrive.
+const RELOAD_WINDOW = 3000;
 function readRoute() {
   return new URLSearchParams(location.hash.slice(1));
 }
@@ -82,6 +87,13 @@ function App() {
   // but not yet echoed back, so a late echo is not taken for a change.
   const known = useRef(new WeakMap<HTMLIFrameElement, string>());
   const pending = useRef(new WeakMap<HTMLIFrameElement, string[]>());
+  // Per frame: how often it has loaded, its last report and the machine it
+  // reported first, so a reload or a link followed inside the frame is told
+  // apart from a step the page took. `pageMove` is the last such step.
+  const loads = useRef(new WeakMap<HTMLIFrameElement, number>());
+  const lastReport = useRef(new WeakMap<HTMLIFrameElement, { machine: Machine; key: string }>());
+  const pageDef = useRef(new WeakMap<HTMLIFrameElement, string>());
+  const pageMove = useRef<{ frame: HTMLIFrameElement; key: string; before: Snapshot; at: number } | undefined>(undefined);
   const routeRef = useRef(route);
   routeRef.current = route;
   const defaultsRef = useRef(defaults);
@@ -146,6 +158,7 @@ function App() {
     defaultsRef.current = undefined;
     setDefaults(undefined);
     setSteps([]);
+    pageMove.current = undefined;
   }, [file]);
   // The snapshot the hash describes, on top of the page's defaults.
   const snapshotOf = (r: URLSearchParams, d: Snapshot, m?: Machine): Snapshot => {
@@ -181,6 +194,7 @@ function App() {
     if (!d) return;
     const before = snapshotOf(routeRef.current, d);
     if (sameSnapshot(before, snap)) return;
+    pageMove.current = undefined;
     // Typing in one field is one step, not one per keystroke.
     setSteps((h) =>
       opts.coalesce && h.at(-1)?.label === label ? h : [...h, { label, before }].slice(-50),
@@ -190,8 +204,49 @@ function App() {
   const back = () => {
     const d = defaultsRef.current, last = steps.at(-1);
     if (!d || !last) return;
+    pageMove.current = undefined;
     setSteps((h) => h.slice(0, -1));
     write(last.before, d);
+  };
+  // A frame that loads again has a new document, which starts from its own
+  // first snapshot. Its first report usually arrives before the load event
+  // and so looks like a step the page took; take that step back, then hand
+  // the frame the hash's snapshot as on a first load. A different machine
+  // means a link inside the frame led to another page: start over from it.
+  const frameLoaded = (frame: HTMLIFrameElement) => {
+    const n = (loads.current.get(frame) ?? 0) + 1;
+    loads.current.set(frame, n);
+    if (n === 1) return;
+    known.current.delete(frame);
+    pending.current.delete(frame);
+    const report = lastReport.current.get(frame), d = defaultsRef.current;
+    if (!report || !d) return;
+    const def = definition(report.machine);
+    const reported = { state: report.machine.state, context: report.machine.context };
+    if (def !== pageDef.current.get(frame)) {
+      pageDef.current.set(frame, def);
+      known.current.set(frame, report.key);
+      pageMove.current = undefined;
+      defaultsRef.current = reported;
+      setDefaults(reported);
+      setSteps([]);
+      update({ state: "", ctx: "" }, { replace: true });
+      return;
+    }
+    const move = pageMove.current;
+    let want = snapshotOf(routeRef.current, d, report.machine);
+    if (
+      move?.frame === frame &&
+      move.key === report.key &&
+      move.key === stable(d) &&
+      performance.now() - move.at < RELOAD_WINDOW
+    ) {
+      pageMove.current = undefined;
+      setSteps((h) => h.slice(0, -1));
+      write(move.before, d, { replace: true });
+      want = move.before;
+    }
+    send(frame, want, true);
   };
   useEffect(() => {
     const receive = (event: MessageEvent) => {
@@ -201,6 +256,8 @@ function App() {
       setMachine(m);
       const reported: Snapshot = { state: m.state, context: m.context };
       const key = stable(reported);
+      lastReport.current.set(frame, { machine: m, key });
+      if (!pageDef.current.has(frame)) pageDef.current.set(frame, definition(m));
       let d = defaultsRef.current;
       if (!d) {
         // The first report after a page loads is its default.
@@ -225,6 +282,7 @@ function App() {
       }
       // Otherwise the page moved by itself, such as a tap on its own button.
       const before = want;
+      pageMove.current = { frame, key, before, at: performance.now() };
       setSteps((h) => [...h, { label: "In the page", before }].slice(-50));
       write(reported, d);
     };
@@ -524,6 +582,7 @@ function App() {
                   fill={viewport === "fill"}
                   zoom={zoom}
                   onFrames={(list) => (frames.current = list)}
+                  onFrameLoad={frameLoaded}
                 />
               ) : entry.format === "markdown" ? (
                 <div className="doc-scroll">

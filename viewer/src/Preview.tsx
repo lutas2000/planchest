@@ -17,12 +17,15 @@ export function Preview({
   fill,
   zoom,
   onFrames,
+  onFrameLoad,
 }: {
   entry: Entry;
   viewports: Viewport[];
   fill: boolean;
   zoom: string;
   onFrames: (frames: (HTMLIFrameElement | null)[]) => void;
+  /** Every load of a frame, including a reload or a link followed inside it. */
+  onFrameLoad: (frame: HTMLIFrameElement) => void;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const frames = useRef<(HTMLIFrameElement | null)[]>([]);
@@ -68,8 +71,9 @@ export function Preview({
         title={entry.title}
         src={asset(entry.file)}
         sandbox="allow-scripts allow-forms"
-        onLoad={() => {
+        onLoad={(e) => {
           setLoaded((l) => ({ ...l, [index]: true }));
+          onFrameLoad(e.currentTarget);
         }}
       />
     </div>

@@ -84,6 +84,17 @@ test("the Viewer drives a page's state machine and keeps the snapshot in its has
     await frame().locator('[data-bind="distance"]', { hasText: "4.99" }).waitFor();
     assert.match(await frameText(frame(), "gps"), /lost/);
 
+    // A reload inside the frame starts the page from its defaults; the Viewer
+    // hands it the hash's snapshot again instead of taking that as a step.
+    const before = await hash(page);
+    await frame().evaluate(() => ((window as any).__old = true));
+    await frame().evaluate(() => location.reload()).catch(() => {});
+    await frame().waitForFunction(() => !(window as any).__old && document.readyState === "complete");
+    await frame().locator('[data-bind="distance"]', { hasText: "4.99" }).waitFor();
+    assert.match(await frameText(frame(), "gps"), /lost/);
+    assert.deepEqual(await hash(page), before);
+    assert.equal(await panel.locator(".history li").count(), 0);
+
     // Compare: every frame shows the same snapshot.
     await page.getByRole("button", { name: "Compare" }).click();
     await page.waitForFunction(() => document.querySelectorAll("iframe").length > 1);
