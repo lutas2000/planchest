@@ -110,6 +110,103 @@ export function mentionsMachine(root: string, file: string): boolean {
 const sides = (p: PageDiff) =>
   (["a", "b"] as const).filter((s) => (s === "a" ? p.change !== "added" : p.change !== "removed"));
 
+/** How many pages are rendered at once. */
+const CONCURRENCY = 4;
+
+type Browser = any;
+type Side = "a" | "b";
+
+/** Renders every state of one side's page, or undefined when it reports no machine. */
+async function renderSide(
+  browser: Browser,
+  url: string,
+  viewport: { width: number; height: number },
+  side: Side,
+  file: string,
+): Promise<Map<string, Rendered> | undefined> {
+  const page = await browser.newPage({ viewport });
+  try {
+    await page.addInitScript(captureMachine);
+    await page.goto(`${url}${side}/${file.split("/").map(encodeURIComponent).join("/")}`, {
+      waitUntil: "load",
+    });
+    await page.waitForFunction(() => (window as any).__planchestMachine, undefined, { timeout: 2000 }).catch(() => {});
+    const machine = readMachine(await page.evaluate(() => (window as any).__planchestMachine));
+    if (!machine) return;
+    const map = new Map<string, Rendered>();
+    for (const s of statesOf(machine)) {
+      await page.evaluate(async ([snap, imageTimeout]: [Snapshot, number]) => {
+        // Wait for the page's report of the new snapshot, or give up quietly.
+        const echoed = new Promise<void>((done) => {
+          const on = (e: MessageEvent) => {
+            if (e.data?.type !== "planchest:machine") return;
+            removeEventListener("message", on);
+            done();
+          };
+          addEventListener("message", on);
+          setTimeout(done, 500);
+        });
+        postMessage({ type: "planchest:state", state: snap.state, context: snap.context }, "*");
+        await echoed;
+        await document.fonts.ready;
+        // Images the state shows, so a slow one is not a difference.
+        await Promise.race([
+          Promise.all(
+            [...document.images].map(
+              (img) =>
+                img.complete ||
+                new Promise((r) => {
+                  img.addEventListener("load", r, { once: true });
+                  img.addEventListener("error", r, { once: true });
+                }),
+            ),
+          ),
+          new Promise((r) => setTimeout(r, imageTimeout)),
+        ]);
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }, [s.snapshot, IMAGE_TIMEOUT]);
+      const png = await page.screenshot({ fullPage: true, animations: "disabled" });
+      map.set(s.id, { label: s.label, snapshot: s.snapshot, png });
+    }
+    return map;
+  } finally {
+    await page.close();
+  }
+}
+
+/** One page's states on both sides, or undefined when neither side reports a machine. */
+async function pageStates(
+  browser: Browser,
+  decoder: any,
+  url: string,
+  viewport: { width: number; height: number },
+  p: PageDiff,
+): Promise<StateDiff[] | undefined> {
+  const rendered: Partial<Record<Side, Map<string, Rendered>>> = {};
+  await Promise.all(
+    sides(p).map(async (side) => {
+      rendered[side] = await renderSide(browser, url, viewport, side, p.file);
+    }),
+  );
+  const { a, b } = rendered;
+  if (!a && !b) return;
+  const ids = [...new Set([...(a?.keys() ?? []), ...(b?.keys() ?? [])])];
+  return Promise.all(
+    ids.map(async (id): Promise<StateDiff> => {
+      const ra = a?.get(id), rb = b?.get(id);
+      const change: Change =
+        !ra ? "added" : !rb ? "removed" : (await looksSame(decoder, ra.png, rb.png)) ? "unchanged" : "changed";
+      return {
+        id,
+        change,
+        ...((rb ?? ra)!.label && { label: (rb ?? ra)!.label }),
+        ...(ra && { a: ra.snapshot }),
+        ...(rb && { b: rb.snapshot }),
+      };
+    }),
+  );
+}
+
 /**
  * Adds `states` to every page with a state machine, marks a page changed when
  * one of its states looks different, and records how the states were
@@ -132,80 +229,28 @@ export async function compareStates(
   try {
     // Decodes screenshots to compare them.
     const decoder = await browser.newPage();
-    // Applied only once every page is done, so a failure part way through
-    // leaves the comparison as the plain diff made it.
-    const results: [PageDiff, StateDiff[]][] = [];
-    for (const p of candidates) {
-      const rendered: Partial<Record<"a" | "b", Map<string, Rendered>>> = {};
-      for (const side of sides(p)) {
-        const page = await browser.newPage({ viewport });
-        try {
-          await page.addInitScript(captureMachine);
-          await page.goto(`${url}${side}/${p.file.split("/").map(encodeURIComponent).join("/")}`, {
-            waitUntil: "load",
-          });
-          await page.waitForFunction(() => (window as any).__planchestMachine, undefined, { timeout: 2000 }).catch(() => {});
-          const machine = readMachine(await page.evaluate(() => (window as any).__planchestMachine));
-          if (!machine) continue;
-          const map = new Map<string, Rendered>();
-          for (const s of statesOf(machine)) {
-            await page.evaluate(async ([snap, imageTimeout]: [Snapshot, number]) => {
-              // Wait for the page's report of the new snapshot, or give up quietly.
-              const echoed = new Promise<void>((done) => {
-                const on = (e: MessageEvent) => {
-                  if (e.data?.type !== "planchest:machine") return;
-                  removeEventListener("message", on);
-                  done();
-                };
-                addEventListener("message", on);
-                setTimeout(done, 500);
-              });
-              postMessage({ type: "planchest:state", state: snap.state, context: snap.context }, "*");
-              await echoed;
-              await document.fonts.ready;
-              // Images the state shows, so a slow one is not a difference.
-              await Promise.race([
-                Promise.all(
-                  [...document.images].map(
-                    (img) =>
-                      img.complete ||
-                      new Promise((r) => {
-                        img.addEventListener("load", r, { once: true });
-                        img.addEventListener("error", r, { once: true });
-                      }),
-                  ),
-                ),
-                new Promise((r) => setTimeout(r, imageTimeout)),
-              ]);
-              await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-            }, [s.snapshot, IMAGE_TIMEOUT]);
-            const png = await page.screenshot({ fullPage: true, animations: "disabled" });
-            map.set(s.id, { label: s.label, snapshot: s.snapshot, png });
+    // A few pages at a time, both sides of each at once. Applied only once
+    // every page is done, so a failure part way through leaves the
+    // comparison as the plain diff made it.
+    const results: (StateDiff[] | undefined)[] = new Array(candidates.length);
+    let next = 0;
+    let failed = false;
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, candidates.length) }, async () => {
+        while (!failed && next < candidates.length) {
+          const i = next++;
+          try {
+            results[i] = await pageStates(browser, decoder, url, viewport, candidates[i]);
+          } catch (err) {
+            failed = true;
+            throw err;
           }
-          rendered[side] = map;
-        } finally {
-          await page.close();
         }
-      }
-      const { a, b } = rendered;
-      if (!a && !b) continue;
-      const ids = [...new Set([...(a?.keys() ?? []), ...(b?.keys() ?? [])])];
-      const states: StateDiff[] = [];
-      for (const id of ids) {
-        const ra = a?.get(id), rb = b?.get(id);
-        const change: Change =
-          !ra ? "added" : !rb ? "removed" : (await looksSame(decoder, ra.png, rb.png)) ? "unchanged" : "changed";
-        states.push({
-          id,
-          change,
-          ...((rb ?? ra)!.label && { label: (rb ?? ra)!.label }),
-          ...(ra && { a: ra.snapshot }),
-          ...(rb && { b: rb.snapshot }),
-        });
-      }
-      results.push([p, states]);
-    }
-    for (const [p, states] of results) {
+      }),
+    );
+    candidates.forEach((p, i) => {
+      const states = results[i];
+      if (!states) return;
       p.states = states;
       // Same HTML can still look different, such as after a token change.
       if (p.change === "unchanged" && states.some((s) => s.change !== "unchanged")) {
@@ -213,7 +258,7 @@ export async function compareStates(
         comparison.counts.changed++;
         p.change = "changed";
       }
-    }
+    });
   } finally {
     server.close();
     await browser.close();
