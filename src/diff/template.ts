@@ -100,6 +100,12 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
 .toolbar label { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); }
 .toolbar label[hidden] { display: none; }
 .toolbar input[type=number] { width: 64px; font: inherit; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: inherit; }
+.toolbar .custom { position: relative; }
+.toolbar .custom summary { list-style: none; display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); cursor: pointer; }
+.toolbar .custom summary::-webkit-details-marker { display: none; }
+.toolbar .custom summary:hover, .toolbar .custom[open] summary { background: var(--hover); color: var(--fg); }
+.toolbar .custom .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
+.toolbar .custom label { justify-content: space-between; }
 .toolbar .path { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .stage { position: relative; overflow: auto; padding: 16px; }
 .pair { position: relative; display: flex; gap: 16px; align-items: flex-start; width: max-content; margin: 0 auto; }
@@ -144,18 +150,23 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
         <button data-w="768">768</button>
         <button data-w="1280" aria-pressed="true">1280</button>
       </div>
-      <label>width <input type="number" id="width" min="200" max="4000" step="10" value="1280"></label>
-      <label>height <input type="number" id="height" min="200" max="6000" step="10" value="800"></label>
+      <details class="custom">
+        <summary title="Set width, height and zoom by hand">Custom</summary>
+        <div class="menu">
+          <label>Width <input type="number" id="width" min="200" max="4000" step="10" value="1280"></label>
+          <label>Height <input type="number" id="height" min="200" max="6000" step="10" value="800"></label>
+          <label>Zoom <input type="number" id="zoom" min="10" max="200" step="5" value="100"></label>
+        </div>
+      </details>
       <div class="group" id="zooms">
         <button data-z="50">50%</button>
         <button data-z="75">75%</button>
         <button data-z="100" aria-pressed="true">100%</button>
         <button data-z="fit" title="Zoom so both sides fit the window">Fit</button>
       </div>
-      <label>zoom <input type="number" id="zoom" min="10" max="200" step="5" value="100">%</label>
-      <label><input type="checkbox" id="sync" checked> sync scroll</label>
-      <label id="split-label" hidden>split <input type="range" id="split" min="0" max="100" value="50"></label>
-      <label id="opacity-label" hidden>opacity <input type="range" id="opacity" min="0" max="100" value="50"></label>
+      <label><input type="checkbox" id="sync" checked> Sync scroll</label>
+      <label id="split-label" hidden>Split <input type="range" id="split" min="0" max="100" value="50"></label>
+      <label id="opacity-label" hidden>Opacity <input type="range" id="opacity" min="0" max="100" value="50"></label>
       <span class="path" id="path"></span>
     </div>
     <div class="stage" id="stage"><div class="empty">Pick a page on the left</div></div>
@@ -356,6 +367,10 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
     }
   });
   $("zoom").addEventListener("change", () => setZoom(Number($("zoom").value) || 100));
+  // The Custom menu closes on a click outside it or on Escape.
+  const custom = document.querySelector(".custom");
+  document.addEventListener("click", (e) => { if (custom.open && !custom.contains(e.target)) custom.open = false; });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") custom.open = false; });
   $("split").addEventListener("input", () => stage.style.setProperty("--split", $("split").value + "%"));
   $("opacity").addEventListener("input", () => stage.style.setProperty("--opacity", $("opacity").value / 100));
 
