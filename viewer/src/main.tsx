@@ -47,7 +47,8 @@ function App() {
   const [error, setError] = useState("");
   const [route, setRoute] = useState(readRoute);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
+  // "" shows every active collection; "archived" shows archived files only.
+  const [category, setCategory] = useState("");
   const [details, setDetails] = useState(innerWidth >= 1024);
   const [nav, setNav] = useState(innerWidth >= 768);
   // No choice stored: follow the system, as the diff report does.
@@ -189,9 +190,9 @@ function App() {
   const entries =
     catalog?.entries.filter(
       (e) =>
-        (status === "archived"
+        (category === "archived"
           ? isArchived(e)
-          : !isArchived(e) && (!status || e.status === status)) &&
+          : !isArchived(e) && (!category || e.kind === category)) &&
         `${e.title} ${e.file} ${e.status ?? ""} ${e.sections.join(" ")}`
           .toLowerCase()
           .includes(query.toLowerCase()),
@@ -267,16 +268,21 @@ function App() {
                 <kbd aria-hidden="true">/</kbd>
               </label>
               <select
-                aria-label="Filter status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                aria-label="Filter collection"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
               >
-                <option value="">All active</option>
-                {[...statuses, "archived"].map((s) => (
-                  <option key={s} value={s}>
-                    {label(s)}
-                  </option>
-                ))}
+                <option value="">All collections</option>
+                {groups
+                  .filter((g) => active.some((e) => e.kind === g))
+                  .map((g) => (
+                    <option key={g} value={g}>
+                      {label(g)}
+                    </option>
+                  ))}
+                {catalog?.entries.some(isArchived) && (
+                  <option value="archived">Archived</option>
+                )}
               </select>
             </div>
             <button
@@ -341,7 +347,7 @@ function App() {
                         key={g}
                         onClick={() => {
                           setQuery("");
-                          setStatus("");
+                          setCategory("");
                           select(active.find((e) => e.kind === g)!.file);
                         }}
                       >
