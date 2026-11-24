@@ -44,7 +44,6 @@ export function Preview({
     viewports.reduce((sum, v) => sum + v.width, 0) +
     GAP * (viewports.length - 1);
   const maxHeight = Math.max(...viewports.map((v) => v.height));
-  const captions = viewports.length > 1 ? 28 : 0;
   useEffect(() => {
     setLoaded({});
   }, [entry.file]);
@@ -59,15 +58,15 @@ export function Preview({
           0.05,
           Math.min(
             1,
-            (e.contentRect.width - 64) / totalWidth,
-            (e.contentRect.height - 64 - captions) / maxHeight,
+            (e.contentRect.width - 32) / totalWidth,
+            (e.contentRect.height - 32) / maxHeight,
           ),
         ),
       ),
     );
     if (box.current) observer.observe(box.current);
     return () => observer.disconnect();
-  }, [totalWidth, maxHeight, captions]);
+  }, [totalWidth, maxHeight]);
   const scale = zoom === "fit" ? fit : Number(zoom);
   const frame = (index: number, style: CSSProperties) => (
     <div className="frame" style={style}>
@@ -89,29 +88,31 @@ export function Preview({
   );
   if (fill)
     return (
-      <div className="canvas fill" ref={box}>
+      <div className="stage fill" ref={box}>
         {frame(0, { width: "100%", height: "100%" })}
       </div>
     );
   return (
-    <div className="canvas" ref={box}>
+    <div className="stage" ref={box}>
       <div className="frames" style={{ gap: GAP * scale }}>
         {viewports.map((v, index) => (
-          <figure key={v.id} className="frame-slot">
-            <div
-              className="frame-space"
-              style={{ width: v.width * scale, height: v.height * scale }}
-            >
-              {frame(index, {
-                width: v.width,
-                height: v.height,
-                transform: `scale(${scale})`,
-              })}
-            </div>
-            {captions > 0 && (
-              <figcaption className="path">{v.label}</figcaption>
+          <div
+            key={v.id}
+            className="frame-space"
+            style={{ width: v.width * scale, height: v.height * scale }}
+          >
+            {viewports.length > 1 && (
+              <span className="tag">
+                <b>{v.label}</b>
+                {v.width} × {v.height}
+              </span>
             )}
-          </figure>
+            {frame(index, {
+              width: v.width,
+              height: v.height,
+              transform: `scale(${scale})`,
+            })}
+          </div>
         ))}
       </div>
     </div>
