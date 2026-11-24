@@ -92,7 +92,7 @@ node bin/planchest.js diff examples/stride/a examples/stride/b --serve
 
 ## Status
 
-Version 0.1: the repo layout, the nine skills, `planchest view` for browsing current design material, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
+Version 0.2: the repo layout, the nine skills, `planchest view` for browsing current design material, and `planchest diff` with directory and git-ref sources. Next: a `planchest check` command for the mechanical part of the `planchest-review` checklist, and token generation from `DESIGN.md`.
 
 ## Develop
 
