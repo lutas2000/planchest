@@ -45,6 +45,18 @@ export default defineConfig({
   root: "viewer",
   base: "./",
   plugins: [react(), inline()],
+  // Every report carries its own copy of this page, so it runs on Preact
+  // through preact/compat: the source and its types stay React's, the
+  // bundle is a fraction of the size. The Viewer keeps React.
+  resolve: {
+    alias: [
+      { find: /^react$/, replacement: "preact/compat" },
+      { find: /^react-dom$/, replacement: "preact/compat" },
+      { find: /^react-dom\/client$/, replacement: "preact/compat/client" },
+      { find: /^react\/jsx-runtime$/, replacement: "preact/compat/jsx-runtime" },
+      { find: /^react\/jsx-dev-runtime$/, replacement: "preact/compat/jsx-dev-runtime" },
+    ],
+  },
   build: {
     outDir: "../report-dist",
     emptyOutDir: true,
