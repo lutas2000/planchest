@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
 
 jobs:
@@ -20,7 +20,16 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm ci
       - run: npm run check
+      # For the report page's browser test.
+      - run: npx playwright install --with-deps chromium
       - run: npm test
+      # The diff report page is committed (the plugin runs without a build);
+      # npm test rebuilt it, so any difference means it was not rebuilt.
+      # `git status` also lists files the build added that were never committed.
+      - name: Check the committed report page is current
+        run: |
+          git status --porcelain --untracked-files=all -- report-dist
+          test -z "$(git status --porcelain --untracked-files=all -- report-dist)"
       - name: Run from the checkout
         run: |
           node bin/planchest.js diff examples/stride/a examples/stride/b --out "$RUNNER_TEMP/report-src"

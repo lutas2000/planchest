@@ -1,6 +1,7 @@
 // Compare two snapshots file by file. The result is what the report
 // renders and what `report.json` holds for the diff skill.
 
+import type { Snapshot as MachineSnapshot } from "../machine.ts";
 import type { Page, Snapshot } from "./pages.ts";
 
 export type Change = "added" | "removed" | "changed" | "unchanged";
@@ -10,6 +11,18 @@ export interface SectionDiff {
   change: Change;
 }
 
+/** One state of a page's state machine: its default, or a preset. */
+export interface StateDiff {
+  /** "default" or the preset's name. */
+  id: string;
+  label?: string;
+  /** Whether the state's screenshots differ, or it exists on one side only. */
+  change: Change;
+  /** The snapshot each side is shown in, for the report to send to its frame. */
+  a?: MachineSnapshot;
+  b?: MachineSnapshot;
+}
+
 export interface PageDiff {
   file: string;
   change: Change;
@@ -17,6 +30,8 @@ export interface PageDiff {
   sections?: SectionDiff[];
   status?: { a?: string; b?: string };
   title?: string;
+  /** Present when either side's page has a state machine and states were compared. */
+  states?: StateDiff[];
 }
 
 export interface FileDiff {
@@ -29,6 +44,8 @@ export interface Comparison {
   /** Non-page files that differ. */
   files: FileDiff[];
   counts: Record<Change, number>;
+  /** How page states were compared; `skipped` says why they were not. */
+  states?: { viewport?: { width: number; height: number }; skipped?: string };
 }
 
 function diffSections(a?: Page, b?: Page): SectionDiff[] | undefined {

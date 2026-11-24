@@ -1,0 +1,52 @@
+name: PR rules
+
+# Branch names, PR bases and PR titles, as CONTRIBUTING.md describes them.
+# "edited" reruns the check when the title or the base changes.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  check:
+    name: Branch, base and title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the PR against CONTRIBUTING.md
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          status=0
+          error() { echo "::error::$1"; status=1; }
+
+          # The branch each kind of branch merges into.
+          case "$HEAD_REF" in
+            develop | hotfix/*) base=main ;;
+            main | feature/* | fix/* | docs/* | chore/*) base=develop ;;
+            *) base= ;;
+          esac
+
+          if [ -z "$base" ]; then
+            error "Branch \"$HEAD_REF\" needs one of the prefixes feature/, fix/, docs/, chore/ or hotfix/."
+          elif [ "$HEAD_REF" != main ] && [ "$HEAD_REF" != develop ] &&
+            ! printf '%s' "$HEAD_REF" | grep -Eq '^[a-z]+/[a-z0-9][a-z0-9.-]*$'; then
+            error "Branch \"$HEAD_REF\": after the prefix, use lowercase words joined by hyphens, like feature/flow-map."
+          fi
+          if [ -n "$base" ] && [ "$BASE_REF" != "$base" ]; then
+            error "\"$HEAD_REF\" merges into $base, not $BASE_REF."
+          fi
+
+          if ! printf '%s' "$TITLE" | grep -Eq '^(feat|fix|docs|refactor|test|chore|ci)!?: [^A-Z ]'; then
+            error "Title \"$TITLE\" should read \"<type>: <subject>\": a type (feat, fix, docs, refactor, test, chore, ci), an optional !, no scope, and a subject starting in lowercase."
+          fi
+          case "$TITLE" in
+            *.) error "Title \"$TITLE\" ends with a period." ;;
+          esac
+          if [ "$HEAD_REF" = develop ] && ! printf '%s' "$TITLE" | grep -Eq '^chore: release v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            error "A release PR is titled \"chore: release vX.Y.Z\"."
+          fi
+
+          exit $status

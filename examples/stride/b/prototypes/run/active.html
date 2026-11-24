@@ -14,29 +14,100 @@
 .row .metric { align-items: center; }
 .controls { display: flex; justify-content: center; align-items: center; gap: var(--space-6); padding: var(--space-5) 0 var(--space-6); }
 .hold { font-size: var(--text-xs); text-align: center; opacity: .55; margin: 0; }
+.paused-note { font-size: var(--text-sm); text-align: center; margin: 0 0 var(--space-3); }
+[data-state="paused"] .hero, [data-state="paused"] .metric-row { opacity: .55; }
 </style></head>
-<body><div class="shell shell--run">
-  <div class="statusbar"><span>19:01</span><span>GPS ●</span></div>
+<body><div class="shell shell--run" data-state="running">
+  <div class="statusbar"><span>19:01</span><span data-bind="gps">GPS ●</span></div>
   <main class="body">
     <div class="hero">
       <div class="ring">
         <svg viewBox="0 0 260 260" aria-hidden="true">
           <circle class="ring__track" cx="130" cy="130" r="120"/>
-          <circle class="ring__fill" cx="130" cy="130" r="120" stroke-dasharray="516 754"/>
+          <circle class="ring__fill" cx="130" cy="130" r="120" stroke-dasharray="516 754" data-bind="ring"/>
         </svg>
-        <div class="metric metric--lg"><span class="metric__value">3.42</span><span class="metric__goal">/ 5 km</span></div>
+        <div class="metric metric--lg"><span class="metric__value" data-bind="distance">3.42</span><span class="metric__goal" data-bind="goal">/ 5 km</span></div>
       </div>
     </div>
-    <div class="split-now"><span>Km 4 · current split</span><b>5'36"</b></div>
+    <p class="paused-note" data-bind="paused" hidden>Paused</p>
+    <div class="split-now"><span data-bind="km">Km 4 · current split</span><b data-bind="split">5'36"</b></div>
     <div class="row metric-row">
-      <div class="metric"><span class="metric__value">19:28</span><span class="metric__label">Time</span></div>
-      <div class="metric"><span class="metric__value">5'41"</span><span class="metric__label">Avg pace</span></div>
-      <div class="metric"><span class="metric__value">231</span><span class="metric__label">kcal</span></div>
+      <div class="metric"><span class="metric__value" data-bind="elapsed">19:28</span><span class="metric__label">Time</span></div>
+      <div class="metric"><span class="metric__value" data-bind="pace">5'41"</span><span class="metric__label">Avg pace</span></div>
+      <div class="metric"><span class="metric__value" data-bind="kcal">231</span><span class="metric__label">kcal</span></div>
     </div>
     <div class="controls">
       <button class="btn btn--secondary btn--on-dark btn--round" aria-label="Hold to end">End</button>
-      <button class="btn btn--primary btn--round">Pause</button>
+      <button class="btn btn--primary btn--round" data-bind="toggle">Pause</button>
     </div>
     <p class="hold">Hold End for 1.5 s to end the run</p>
   </main>
-</div></body></html>
+</div>
+<script>
+// State machine for the Planchest Viewer (see `planchest docs design-repo`).
+// The page renders a (state, context) snapshot; the Viewer switches states,
+// applies presets and edits the context.
+const machine = {
+  states: [
+    { id: "running", label: "Running" },
+    { id: "paused", label: "Paused", description: "Pause happens in place; the run screen stays." },
+  ],
+  transitions: [
+    { event: "PAUSE", label: "Pause", from: "running", to: "paused" },
+    { event: "RESUME", label: "Resume", from: "paused", to: "running" },
+  ],
+  fields: {
+    distanceKm: { label: "Distance (km)" },
+    goalKm: { label: "Goal (km)" },
+    elapsed: { label: "Time" },
+    pace: { label: "Avg pace" },
+    split: { label: "Current split" },
+    kcal: { label: "kcal" },
+    gps: { label: "GPS", options: [{ value: "good", label: "Good" }, { value: "weak", label: "Weak" }, { value: "lost", label: "Lost" }] },
+  },
+  presets: [
+    { name: "just-started", label: "Just started", context: { distanceKm: 0.18, elapsed: "1:04", pace: "5'55\"", split: "5'55\"", kcal: 12 } },
+    { name: "almost-there", label: "Almost there", context: { distanceKm: 4.86, elapsed: "27:31", pace: "5'40\"", split: "5'29\"", kcal: 329 } },
+    { name: "weak-gps", label: "Weak GPS", context: { gps: "weak" } },
+    { name: "paused-halfway", label: "Paused halfway", state: "paused", context: { distanceKm: 2.5, elapsed: "14:12", pace: "5'41\"", kcal: 169 } },
+  ],
+};
+let snapshot = {
+  state: "running",
+  context: { distanceKm: 3.42, goalKm: 5, elapsed: "19:28", pace: "5'41\"", split: "5'36\"", kcal: 231, gps: "good" },
+};
+const bind = (name) => document.querySelector(`[data-bind="${name}"]`);
+function render() {
+  const { state, context: c } = snapshot;
+  document.querySelector(".shell").dataset.state = state;
+  const done = Math.max(0, Math.min(1, c.distanceKm / c.goalKm || 0));
+  bind("ring").setAttribute("stroke-dasharray", `${Math.round(754 * done)} 754`);
+  bind("distance").textContent = Number(c.distanceKm).toFixed(2);
+  bind("goal").textContent = `/ ${c.goalKm} km`;
+  bind("km").textContent = `Km ${Math.floor(c.distanceKm) + 1} · current split`;
+  bind("split").textContent = c.split;
+  bind("elapsed").textContent = c.elapsed;
+  bind("pace").textContent = c.pace;
+  bind("kcal").textContent = c.kcal;
+  bind("gps").textContent = { good: "GPS ●", weak: "GPS ◐ weak", lost: "GPS ○ lost" }[c.gps] ?? "GPS";
+  bind("paused").hidden = state !== "paused";
+  bind("toggle").textContent = state === "paused" ? "Resume" : "Pause";
+}
+function report() {
+  parent.postMessage({ type: "planchest:machine", ...machine, ...snapshot }, "*");
+}
+addEventListener("message", (e) => {
+  if (e.data?.type !== "planchest:state") return;
+  snapshot = { state: e.data.state, context: e.data.context };
+  render();
+  report();
+});
+bind("toggle").addEventListener("click", () => {
+  snapshot = { ...snapshot, state: snapshot.state === "paused" ? "running" : "paused" };
+  render();
+  report();
+});
+render();
+report();
+</script>
+</body></html>

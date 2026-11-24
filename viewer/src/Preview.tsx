@@ -2,23 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import type { Entry, Viewport } from "../../src/viewer/index";
 import { asset } from "./paths";
-
-/** One control a previewed page offers, such as its locale or state. */
-export interface PageControl {
-  name: string;
-  label?: string;
-  value: string;
-  options: { value: string; label?: string }[];
-}
+import { ScaledBox } from "./shared/controls";
 
 const GAP = 24;
 
 /**
  * Renders one frame per viewport (several when comparing), or one frame that
- * fills the canvas. Pages talk to the Viewer with postMessage:
- *   page → Viewer  { type: "planchest:controls", controls: PageControl[] }
- *   Viewer → page  { type: "planchest:set", name, value, restore? }
- * `restore` marks values re-sent from the Viewer hash right after a load.
+ * fills the canvas. A page with a state machine talks to the Viewer with
+ * postMessage; see src/machine.ts.
  */
 export function Preview({
   entry,
@@ -33,7 +24,8 @@ export function Preview({
   fill: boolean;
   zoom: string;
   onFrames: (frames: (HTMLIFrameElement | null)[]) => void;
-  onFrameLoad: (index: number) => void;
+  /** Every load of a frame, including a reload or a link followed inside it. */
+  onFrameLoad: (frame: HTMLIFrameElement) => void;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const frames = useRef<(HTMLIFrameElement | null)[]>([]);
@@ -79,9 +71,9 @@ export function Preview({
         title={entry.title}
         src={asset(entry.file)}
         sandbox="allow-scripts allow-forms"
-        onLoad={() => {
+        onLoad={(e) => {
           setLoaded((l) => ({ ...l, [index]: true }));
-          onFrameLoad(index);
+          onFrameLoad(e.currentTarget);
         }}
       />
     </div>
@@ -96,23 +88,23 @@ export function Preview({
     <div className="stage" ref={box}>
       <div className="frames" style={{ gap: GAP * scale }}>
         {viewports.map((v, index) => (
-          <div
+          <ScaledBox
             key={v.id}
             className="frame-space"
-            style={{ width: v.width * scale, height: v.height * scale }}
+            width={v.width}
+            height={v.height}
+            scale={scale}
+            overlay={
+              viewports.length > 1 && (
+                <span className="tag">
+                  <b>{v.label}</b>
+                  {v.width} × {v.height}
+                </span>
+              )
+            }
           >
-            {viewports.length > 1 && (
-              <span className="tag">
-                <b>{v.label}</b>
-                {v.width} × {v.height}
-              </span>
-            )}
-            {frame(index, {
-              width: v.width,
-              height: v.height,
-              transform: `scale(${scale})`,
-            })}
-          </div>
+            {frame(index, { width: "100%", height: "100%" })}
+          </ScaledBox>
         ))}
       </div>
     </div>

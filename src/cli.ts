@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { diff } from "./diff/index.ts";
+import { diffWithStates } from "./diff/index.ts";
+import type { Comparison } from "./diff/compare.ts";
 import { serve } from "./diff/serve.ts";
 import { publishViewer } from "./viewer/index.ts";
+import { DEFAULT_SITEMAP, takeShots } from "./shots.ts";
 import { DOCS, docNames, init } from "./init.ts";
 
 const DEFAULT_OUT = ".planchest/diff";
@@ -18,6 +20,7 @@ Usage
   planchest diff <a> <b> [options]   compare two versions of design pages
   planchest view [dir] [--build]    browse a design repo (or export with --build)
   planchest serve [dir] [--port N]   serve a report directory
+  planchest shots [dir]              render the screenshots the sitemap asks for
   planchest --version
 
 Each side of a diff is a directory, a git ref, or <ref>:<path>:
@@ -33,11 +36,27 @@ Options for diff
   --serve           serve the report after writing it
   --port <n>        port for --serve (default ${DEFAULT_PORT})
   --json            print report.json to stdout instead of a summary
+  --no-states       do not compare the states of pages with a state machine
+                    (comparing them needs Playwright, or PLANCHEST_BROWSER)
+
+Options for shots
+  --sitemap <file>  the page whose <img data-shot> to render (default ${DEFAULT_SITEMAP})
+                    needs Playwright, or PLANCHEST_BROWSER set to a Chromium executable
 `;
 
 function version(): string {
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   return pkg.version;
+}
+
+/** The summary line about page states, if there is anything to say. */
+function states(c: Comparison): string {
+  if (c.states?.skipped) return `states: not compared (${c.states.skipped})\n`;
+  const all = c.pages.flatMap((p) => p.states ?? []);
+  if (!all.length) return "";
+  const differ = all.filter((s) => s.change !== "unchanged").length;
+  const pages = c.pages.filter((p) => p.states).length;
+  return `states: ${differ} of ${all.length} differ, on ${pages} page${pages === 1 ? "" : "s"} with a state machine\n`;
 }
 
 function fail(message: string): never {
@@ -49,6 +68,7 @@ async function main(argv: string[]) {
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
+    allowNegative: true,
     options: {
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
@@ -58,7 +78,9 @@ async function main(argv: string[]) {
       serve: { type: "boolean" },
       port: { type: "string" },
       json: { type: "boolean" },
+      states: { type: "boolean" },
       build: { type: "boolean" },
+      sitemap: { type: "string" },
     },
   });
 
@@ -83,7 +105,7 @@ async function main(argv: string[]) {
     const paths = values.paths?.split(",").map((p) => p.trim()).filter(Boolean);
     let report;
     try {
-      report = diff(a, b, { cwd, out, repo: values.repo, paths });
+      report = await diffWithStates(a, b, { cwd, out, repo: values.repo, paths, states: values.states });
     } catch (err) {
       fail(err instanceof Error ? err.message : String(err));
     }
@@ -96,6 +118,7 @@ async function main(argv: string[]) {
           `${report.b.label}${report.b.commit ? " @" + report.b.commit : ""}\n` +
           `pages: ${c.changed} changed, ${c.added} added, ${c.removed} removed, ${c.unchanged} unchanged\n` +
           `other files: ${report.comparison.files.length} differ\n` +
+          states(report.comparison) +
           `report: ${resolve(cwd, out)}/index.html\n`,
       );
     }
@@ -142,6 +165,20 @@ async function main(argv: string[]) {
     const doc = name.replace(/\.md$/, "");
     if (!names.includes(doc)) fail(`no document "${name}"; available: ${names.join(", ")}`);
     process.stdout.write(readFileSync(resolve(DOCS, doc + ".md"), "utf8"));
+    return;
+  }
+
+  if (command === "shots") {
+    const [dir, extra] = rest;
+    if (extra) fail(`unexpected argument "${extra}"`);
+    const root = resolve(cwd, dir ?? ".");
+    let shots;
+    try {
+      shots = await takeShots(root, values.sitemap ?? DEFAULT_SITEMAP, (line) => process.stdout.write(line + "\n"));
+    } catch (err) {
+      fail(err instanceof Error ? err.message : String(err));
+    }
+    process.stdout.write(`${shots.length} screenshot${shots.length === 1 ? "" : "s"}\n`);
     return;
   }
 

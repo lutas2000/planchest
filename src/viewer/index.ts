@@ -56,7 +56,7 @@ export function readViewerConfig(root: string): ViewerConfig | undefined {
   try {
     raw = JSON.parse(readFileSync(file, "utf8"));
   } catch (e) {
-    throw new Error(`planchest.json is not valid JSON: ${(e as Error).message}`);
+    throw new Error(`planchest.json is not valid JSON: ${(e as Error).message}`, { cause: e });
   }
   const viewer = raw?.viewer;
   if (viewer === undefined) return undefined;
@@ -176,6 +176,8 @@ export function buildCatalog(
       ].includes(ext)
     )
       continue;
+    // Flow map screenshots are assets of flows/sitemap.html, not entries.
+    if (file.startsWith("flows/shots/")) continue;
     const text = [".html", ".htm", ".md"].includes(ext)
       ? readFileSync(join(root, file), "utf8")
       : "";

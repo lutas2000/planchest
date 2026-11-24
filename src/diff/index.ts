@@ -9,12 +9,15 @@ import { copyRoot } from "./copy.ts";
 import { snapshot } from "./pages.ts";
 import { writeReport, type Report } from "./report.ts";
 import { resolveSource } from "./sources.ts";
+import { compareStates } from "./states.ts";
 
 export interface DiffOptions {
   cwd: string;
   out: string;
   repo?: string;
   paths?: string[];
+  /** Compare the states of pages with a state machine (default true). */
+  states?: boolean;
 }
 
 export function diff(specA: string, specB: string, opts: DiffOptions): Report {
@@ -47,4 +50,24 @@ export function diff(specA: string, specB: string, opts: DiffOptions): Report {
     a.cleanup();
     b.cleanup();
   }
+}
+
+/**
+ * `diff`, then the states of pages with a state machine, rendered in a
+ * browser. Without a browser the report says the states were skipped.
+ */
+export async function diffWithStates(specA: string, specB: string, opts: DiffOptions): Promise<Report> {
+  const report = diff(specA, specB, opts);
+  if (opts.states === false) return report;
+  const out = resolve(opts.cwd, opts.out);
+  try {
+    await compareStates(out, report.comparison, opts.cwd);
+  } catch (err) {
+    report.comparison.states = {
+      ...report.comparison.states,
+      skipped: err instanceof Error ? err.message.split("\n")[0] : String(err),
+    };
+  }
+  writeReport(out, report);
+  return report;
 }

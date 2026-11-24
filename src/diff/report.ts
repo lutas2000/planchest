@@ -1,11 +1,13 @@
 // Build the report: `report.json` for machines, `index.html` for people.
 // The page is one self-contained file; the data is embedded as JSON and
-// the two sides are loaded into iframes from `a/` and `b/`.
+// the two sides are loaded into iframes from `a/` and `b/`. The page is
+// built from viewer/src/report/ into report-dist/index.html.
 
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Comparison } from "./compare.ts";
-import { TEMPLATE } from "./template.ts";
+
+const PAGE = new URL("../../report-dist/index.html", import.meta.url);
 
 export interface SideInfo {
   label: string;
@@ -28,7 +30,9 @@ export function writeReport(outDir: string, report: Report): void {
   writeFileSync(join(outDir, "report.json"), json + "\n");
   // `</script>` inside the data would end the script block early.
   const embedded = json.replace(/</g, "\\u003c");
-  writeFileSync(join(outDir, "index.html"), TEMPLATE.replace("__REPORT_JSON__", embedded));
+  const page = readFileSync(PAGE, "utf8");
+  // A function, so `$&` and the like in the data are not replacement patterns.
+  writeFileSync(join(outDir, "index.html"), page.replace("__REPORT_JSON__", () => embedded));
   // The diff skill overwrites this with its summary; an empty file keeps
   // the page from requesting something that does not exist.
   writeFileSync(join(outDir, "summary.html"), "");
