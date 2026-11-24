@@ -55,6 +55,9 @@ export interface Machine extends Snapshot {
   fields: Record<string, Field>;
 }
 
+/** The name kept for a page's own first snapshot; no preset may use it. */
+export const DEFAULT_PRESET = "default";
+
 const ID = /^[\w.:-]+$/;
 const text = (v: unknown) => (typeof v === "string" ? v : undefined);
 const isObject = (v: unknown): v is Record<string, unknown> =>
@@ -84,10 +87,14 @@ export function readMachine(data: unknown): Machine | undefined {
       return [{ event, label: text(t.label), from, to, context: isObject(t.context) ? t.context : undefined }];
     },
   );
+  // "default" names the page's own first snapshot, and a name used twice
+  // would make two presets one.
+  const names = new Set([DEFAULT_PRESET]);
   const presets: Preset[] = (Array.isArray(data.presets) ? data.presets : []).flatMap((p: unknown) => {
     if (!isObject(p)) return [];
     const name = text(p.name), state = text(p.state);
-    if (!name || (state !== undefined && !known.has(state))) return [];
+    if (!name || names.has(name) || (state !== undefined && !known.has(state))) return [];
+    names.add(name);
     return [{
       name,
       label: text(p.label),

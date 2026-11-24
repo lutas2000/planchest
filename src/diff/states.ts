@@ -8,14 +8,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { captureMachine, launchBrowser } from "../browser.ts";
-import { applyPreset, readMachine } from "../machine.ts";
+import { applyPreset, DEFAULT_PRESET, readMachine } from "../machine.ts";
 import type { Machine, Snapshot } from "../machine.ts";
 import { readViewerConfig } from "../viewer/index.ts";
 import type { Change, Comparison, PageDiff } from "./compare.ts";
 import { serve } from "./serve.ts";
 
 /** The id of the page's own first snapshot among a page's states. */
-export const DEFAULT_STATE = "default";
+export const DEFAULT_STATE = DEFAULT_PRESET;
 const FALLBACK_VIEWPORT = { width: 1280, height: 800 };
 /** How far one colour channel may differ before a pixel counts as changed. */
 const CHANNEL_TOLERANCE = 24;

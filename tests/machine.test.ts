@@ -25,6 +25,8 @@ const report = {
   presets: [
     { name: "busy", state: "active", context: { load: 9 } },
     { name: "broken", state: "nowhere" },
+    { name: "busy", context: { load: 2 } },
+    { name: "default", context: { load: 3 } },
   ],
   fields: { load: { label: "Load", options: ["1", { value: "9", label: "Nine" }] } },
   state: "idle",
