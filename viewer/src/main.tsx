@@ -6,6 +6,7 @@ import type {PageControl} from "./Preview";
 import {asset} from "./paths";
 import { PanelToggles, Segmented } from "./shared/controls";
 import type { Option } from "./shared/controls";
+import { readText, writeText } from "./shared/storage";
 import type { Catalog, Entry, Viewport } from "../../src/viewer/index";
 import "./shared/base.css";
 import "./style.css";
@@ -55,13 +56,8 @@ function App() {
   const [details, setDetails] = useState(innerWidth >= 1024);
   const [nav, setNav] = useState(innerWidth >= 768);
   // No choice stored: follow the system, as the diff report does.
-  const [theme, setTheme] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem("planchest.theme");
-    } catch {
-      return null;
-    }
-  });
+  // Stored as a plain string ("dark"), not JSON, so earlier choices still read.
+  const [theme, setTheme] = useState<string | null>(() => readText("planchest.theme"));
   const [systemDark, setSystemDark] = useState(
     () => matchMedia("(prefers-color-scheme: dark)").matches,
   );
@@ -74,9 +70,7 @@ function App() {
   useEffect(() => {
     if (theme) document.documentElement.dataset.theme = theme;
     else delete document.documentElement.dataset.theme;
-    try {
-      if (theme) localStorage.setItem("planchest.theme", theme);
-    } catch {}
+    if (theme) writeText("planchest.theme", theme);
   }, [theme]);
   const dark = theme ? theme === "dark" : systemDark;
   const search = useRef<HTMLInputElement>(null);
