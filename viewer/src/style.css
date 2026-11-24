@@ -97,3 +97,39 @@ aside .document h2 { font-size: 12px; color: var(--muted); margin: 24px 0 8px; }
 @media (min-width: 768px) {
   header .counts:empty + .panels { margin-left: auto; }
 }
+
+/* State machine: the toolbar's preset select and state chip, and the panel in Details. */
+.toolbar .state-chip { height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); font: 12px/26px var(--mono); }
+.toolbar .state-chip:hover { background: var(--hover); }
+.machine { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.machine h2 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.machine button.link { border: 0; background: none; padding: 0; font-size: 12px; color: var(--accent); }
+.machine button.link:hover { text-decoration: underline; }
+.machine .states { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.machine .states button { height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 14px; background: none; font: 12px var(--mono); color: var(--muted); }
+.machine .states button:hover { background: var(--hover); color: var(--fg); }
+.machine .states button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--fg); }
+.machine .events, .machine .presets { display: grid; gap: 4px; }
+.machine .events button, .machine .presets button { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-height: 32px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); text-align: left; }
+.machine .events button:hover, .machine .presets button:hover { background: var(--hover); }
+.machine .presets button[aria-pressed="true"] { box-shadow: inset 2px 0 0 var(--accent); background: var(--pressed); }
+.machine small { font: 11px var(--mono); color: var(--muted); white-space: nowrap; }
+.machine .fields { display: grid; gap: 8px; }
+.machine .field { display: flex; align-items: flex-end; gap: 8px; }
+.machine .field label { flex: 1; display: grid; gap: 4px; min-width: 0; font-size: 12px; color: var(--muted); }
+.machine .field label > span { display: flex; gap: 8px; align-items: baseline; }
+.machine .field label code { font-size: 11px; }
+.machine .field.changed label > span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--changed); align-self: center; }
+.machine .field .link { height: 28px; }
+.machine input[type="text"], .machine input[type="number"], .machine .field select { width: 100%; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); font-size: 13px; }
+.machine input[type="checkbox"] { justify-self: start; width: 16px; height: 16px; margin: 6px 0; accent-color: var(--accent); }
+.machine input.mono, .machine .json { font-family: var(--mono); font-size: 12px; }
+.machine .invalid, .machine .json[aria-invalid="true"] { border-color: var(--removed); }
+.machine .json { display: block; width: 100%; min-height: 160px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--fg); resize: vertical; margin-top: 8px; }
+.machine .json-editor .json { margin-top: 0; }
+.machine .error { color: var(--removed); font-size: 12px; margin: 4px 0 0; }
+.machine .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 0; }
+.machine .actions button { height: 28px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 12px; }
+.machine .actions button:hover { background: var(--hover); }
+.machine .history { margin: 0; padding-left: 20px; font-size: 12px; }
+.machine .history small { margin-left: 8px; }

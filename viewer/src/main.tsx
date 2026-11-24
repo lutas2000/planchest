@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import {Document} from "./Document";
 import {Preview} from "./Preview";
-import type {PageControl} from "./Preview";
+import { PresetSelect, StatePanel } from "./StatePanel";
+import type { Commit, Step } from "./StatePanel";
+import { readMachine, sameSnapshot, changedContext, stable } from "../../src/machine";
+import type { Context, Machine, Snapshot } from "../../src/machine";
 import {asset} from "./paths";
 import { PanelToggles, Segmented } from "./shared/controls";
 import type { Option } from "./shared/controls";
@@ -28,20 +31,15 @@ const defaultViewports: Viewport[] = [
   { id: "Tablet", label: "Tablet", width: 768, height: 1024 },
   { id: "Desktop", label: "Desktop", width: 1440, height: 900 },
 ];
-// Page control values live in the Viewer hash as c-<name>=<value>.
-const controlKey = (name: string) => "c-" + name;
-function readControls(data: unknown): PageControl[] | undefined {
-  const d = data as { type?: unknown; controls?: unknown };
-  if (d?.type !== "planchest:controls" || !Array.isArray(d.controls)) return;
-  const text = (v: unknown) => (typeof v === "string" ? v : undefined);
-  return d.controls.flatMap((c: any) => {
-    const name = text(c?.name);
-    if (!name || !/^[\w.-]+$/.test(name) || !Array.isArray(c.options)) return [];
-    const options = c.options.flatMap((o: any) =>
-      text(o?.value) !== undefined ? [{ value: o.value, label: text(o.label) }] : [],
-    );
-    return [{ name, label: text(c.label), value: text(c.value) ?? "", options }];
-  });
+// The state machine's snapshot lives in the Viewer hash as state=<id> and
+// ctx=<JSON of the context keys that differ from the page's defaults>.
+function readContext(raw: string | null): Context {
+  try {
+    const v = JSON.parse(raw ?? "{}");
+    return typeof v === "object" && v && !Array.isArray(v) ? v : {};
+  } catch {
+    return {};
+  }
 }
 function readRoute() {
   return new URLSearchParams(location.hash.slice(1));
@@ -74,10 +72,20 @@ function App() {
   }, [theme]);
   const dark = theme ? theme === "dark" : systemDark;
   const search = useRef<HTMLInputElement>(null);
-  const [controls, setControls] = useState<PageControl[]>([]);
+  // The page's state machine, the snapshot it reported first after loading
+  // (its defaults) and the steps taken since, for Back.
+  const [machine, setMachine] = useState<Machine>();
+  const [defaults, setDefaults] = useState<Snapshot>();
+  const [steps, setSteps] = useState<Step[]>([]);
   const frames = useRef<(HTMLIFrameElement | null)[]>([]);
+  // Per frame: the snapshot it last reported or was sent, and snapshots sent
+  // but not yet echoed back, so a late echo is not taken for a change.
+  const known = useRef(new WeakMap<HTMLIFrameElement, string>());
+  const pending = useRef(new WeakMap<HTMLIFrameElement, string[]>());
   const routeRef = useRef(route);
   routeRef.current = route;
+  const defaultsRef = useRef(defaults);
+  defaultsRef.current = defaults;
   useEffect(() => {
     fetch("catalog.json")
       .then((r) => {
@@ -114,46 +122,122 @@ function App() {
       window.removeEventListener("keydown", key);
     };
   }, []);
-  useEffect(() => {
-    const receive = (event: MessageEvent) => {
-      const index = frames.current.findIndex(
-        (f) => f && f.contentWindow === event.source,
-      );
-      const list = index < 0 ? undefined : readControls(event.data);
-      // The first frame's report is what the toolbar shows.
-      if (list && index === 0) setControls(list);
-    };
-    window.addEventListener("message", receive);
-    return () => window.removeEventListener("message", receive);
-  }, []);
-  const update = (values: Record<string, string>) => {
-    const next = new URLSearchParams(route);
+  const update = (values: Record<string, string>, opts: { replace?: boolean } = {}) => {
+    const next = new URLSearchParams(routeRef.current);
     for (const [k, v] of Object.entries(values)) {
       if (v) next.set(k, v);
       else next.delete(k);
     }
-    location.hash = next.toString();
+    // Keep the route current at once, so a page report that arrives before
+    // hashchange compares against the new snapshot.
+    routeRef.current = next;
+    if (opts.replace) history.replaceState(null, "", "#" + next.toString());
+    else location.hash = next.toString();
+    setRoute(next);
   };
   const select = (file: string) => {
-    update({ file });
+    update({ file, state: "", ctx: "" });
     if (innerWidth < 768) setNav(false);
   };
   const file = route.get("file"),
     entry = catalog?.entries.find((e) => e.file === file);
   useEffect(() => {
-    setControls([]);
+    setMachine(undefined);
+    defaultsRef.current = undefined;
+    setDefaults(undefined);
+    setSteps([]);
   }, [file]);
-  // After each load, hand the frame the control values kept in the hash.
-  // A page ignores names and values it does not offer.
-  const restoreControls = (index: number) => {
-    const target = frames.current[index]?.contentWindow;
-    for (const [key, value] of routeRef.current)
-      if (key.startsWith("c-"))
-        target?.postMessage(
-          { type: "planchest:set", name: key.slice(2), value, restore: true },
-          "*",
-        );
+  // The snapshot the hash describes, on top of the page's defaults.
+  const snapshotOf = (r: URLSearchParams, d: Snapshot, m?: Machine): Snapshot => {
+    const state = r.get("state");
+    return {
+      state: state && (!m || m.states.some((s) => s.id === state)) ? state : d.state,
+      context: { ...d.context, ...readContext(r.get("ctx")) },
+    };
   };
+  const current = defaults && snapshotOf(route, defaults, machine);
+  const send = (frame: HTMLIFrameElement, snap: Snapshot, restore?: boolean) => {
+    const key = stable(snap);
+    if (known.current.get(frame) === key) return;
+    known.current.set(frame, key);
+    pending.current.set(frame, [...(pending.current.get(frame) ?? []), key].slice(-20));
+    frame.contentWindow?.postMessage(
+      { type: "planchest:state", state: snap.state, context: snap.context, ...(restore && { restore }) },
+      "*",
+    );
+  };
+  const write = (snap: Snapshot, d: Snapshot, opts: { replace?: boolean } = {}) => {
+    const ctx = changedContext(d.context, snap.context);
+    update(
+      {
+        state: snap.state === d.state ? "" : snap.state,
+        ctx: Object.keys(ctx).length ? JSON.stringify(ctx) : "",
+      },
+      opts,
+    );
+  };
+  const commit: Commit = (snap, label, opts = {}) => {
+    const d = defaultsRef.current;
+    if (!d) return;
+    const before = snapshotOf(routeRef.current, d);
+    if (sameSnapshot(before, snap)) return;
+    // Typing in one field is one step, not one per keystroke.
+    setSteps((h) =>
+      opts.coalesce && h.at(-1)?.label === label ? h : [...h, { label, before }].slice(-50),
+    );
+    write(snap, d, { replace: opts.coalesce });
+  };
+  const back = () => {
+    const d = defaultsRef.current, last = steps.at(-1);
+    if (!d || !last) return;
+    setSteps((h) => h.slice(0, -1));
+    write(last.before, d);
+  };
+  useEffect(() => {
+    const receive = (event: MessageEvent) => {
+      const frame = frames.current.find((f) => f && f.contentWindow === event.source);
+      const m = frame && readMachine(event.data);
+      if (!frame || !m) return;
+      setMachine(m);
+      const reported: Snapshot = { state: m.state, context: m.context };
+      const key = stable(reported);
+      let d = defaultsRef.current;
+      if (!d) {
+        // The first report after a page loads is its default.
+        d = defaultsRef.current = reported;
+        setDefaults(reported);
+      }
+      const fresh = !known.current.has(frame);
+      known.current.set(frame, key);
+      const want = snapshotOf(routeRef.current, d, m);
+      if (sameSnapshot(want, reported)) {
+        pending.current.delete(frame);
+        return;
+      }
+      // A newly loaded frame takes the snapshot kept in the hash.
+      if (fresh) return send(frame, want, true);
+      // An echo of something the Viewer sent earlier is not a change.
+      const sent = pending.current.get(frame) ?? [];
+      const at = sent.indexOf(key);
+      if (at >= 0) {
+        pending.current.set(frame, sent.slice(at + 1));
+        return;
+      }
+      // Otherwise the page moved by itself, such as a tap on its own button.
+      const before = want;
+      setSteps((h) => [...h, { label: "In the page", before }].slice(-50));
+      write(reported, d);
+    };
+    window.addEventListener("message", receive);
+    return () => window.removeEventListener("message", receive);
+  }, []);
+  // Every frame shows the hash's snapshot: after a commit, Back, a page's own
+  // change (the other frames follow) and browser history.
+  const currentKey = current && stable(current);
+  useEffect(() => {
+    if (!current) return;
+    for (const frame of frames.current) if (frame && known.current.has(frame)) send(frame, current);
+  }, [currentKey]);
   const viewports = catalog?.viewer?.viewports ?? defaultViewports;
   const byId = (id: string) => viewports.find((v) => v.id === id);
   const fallback = byId(catalog?.viewer?.default ?? "") ?? viewports[0];
@@ -168,17 +252,6 @@ function App() {
   const shown =
     viewport === "compare" ? compareSet : [byId(viewport) ?? fallback];
   const zoom = route.get("zoom") ?? "fit";
-  const setControl = (name: string, value: string) => {
-    update({ [controlKey(name)]: value });
-    setControls((list) =>
-      list.map((c) => (c.name === name ? { ...c, value } : c)),
-    );
-    for (const frame of frames.current)
-      frame?.contentWindow?.postMessage(
-        { type: "planchest:set", name, value },
-        "*",
-      );
-  };
   // Archived: moved under an archive/ directory or marked status: archived.
   const isArchived = (e: Entry) =>
     e.file.includes("/archive/") || e.status === "archived";
@@ -413,21 +486,23 @@ function App() {
                         onChange={(z) => update({ zoom: z })}
                       />
                     )}
-                    {controls.map((c) => (
-                      <label key={c.name}>
-                        {c.label ?? c.name}{" "}
-                        <select
-                          value={c.value}
-                          onChange={(e) => setControl(c.name, e.target.value)}
+                    {machine && defaults && current && (
+                      <>
+                        <PresetSelect
+                          machine={machine}
+                          defaults={defaults}
+                          current={current}
+                          onCommit={commit}
+                        />
+                        <button
+                          className="state-chip"
+                          title={details ? "The state machine is in Details" : "Show the state machine in Details"}
+                          onClick={() => setDetails(true)}
                         >
-                          {c.options.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {o.label ?? o.value}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    ))}
+                          {machine.states.find((s) => s.id === current.state)?.label ?? current.state}
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
                 <span className="where">
@@ -449,7 +524,6 @@ function App() {
                   fill={viewport === "fill"}
                   zoom={zoom}
                   onFrames={(list) => (frames.current = list)}
-                  onFrameLoad={restoreControls}
                 />
               ) : entry.format === "markdown" ? (
                 <div className="doc-scroll">
@@ -469,6 +543,16 @@ function App() {
         </main>
         {details && entry && (
           <aside aria-label="Details">
+            {entry.format === "html" && machine && defaults && current && (
+              <StatePanel
+                machine={machine}
+                defaults={defaults}
+                current={current}
+                history={steps}
+                onCommit={commit}
+                onBack={back}
+              />
+            )}
             {!entry.file.split("/").includes("prototypes") && (
               <>
                 <h2>Status</h2>

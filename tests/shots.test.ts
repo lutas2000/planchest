@@ -17,22 +17,24 @@ test("the sitemap's data-shot images become screenshot jobs relative to the repo
   const root = repo(`<!doctype html><body>
     <img src="shots/a.png" data-shot="../prototypes/run/start.html">
     <section data-viewport="1440x900">
-      <img src="shots/b.png" data-shot="../concepts/home/index.html#today" data-set="state=paused; unit = km">
+      <img src="shots/b.png" data-shot="../concepts/home/index.html#today" data-preset="Weak GPS" data-state="paused" data-context='{"unit":"km"}'>
       <img src="shots/c.png" data-shot="../prototypes/x.html" data-viewport="320x568">
     </section>
     <img src="shots/plain.png">
   </body>`);
   try {
     assert.deepEqual(collectShots(root), [
-      { page: "prototypes/run/start.html", out: "flows/shots/a.png", width: 390, height: 844, set: [] },
+      { page: "prototypes/run/start.html", out: "flows/shots/a.png", width: 390, height: 844 },
       {
         page: "concepts/home/index.html#today",
         out: "flows/shots/b.png",
         width: 1440,
         height: 900,
-        set: [["state", "paused"], ["unit", "km"]],
+        preset: "Weak GPS",
+        state: "paused",
+        context: { unit: "km" },
       },
-      { page: "prototypes/x.html", out: "flows/shots/c.png", width: 320, height: 568, set: [] },
+      { page: "prototypes/x.html", out: "flows/shots/c.png", width: 320, height: 568 },
     ]);
   } finally {
     rmSync(root, { recursive: true, force: true });

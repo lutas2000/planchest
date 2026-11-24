@@ -50,7 +50,7 @@ It has two parts.
 <figure><img src="shots/run-start.png" data-shot="../prototypes/run/start.html" alt="Start: GPS ready"><figcaption>GPS ready</figcaption></figure>
 ```
 
-- `data-shot` is the page to capture, relative to the sitemap; `#id` captures one `section[data-page]` of a concept. `data-set="state=paused"` sets a page control first. `data-viewport="1440x900"` on the `<img>` or any ancestor changes the size (default 390x844).
+- `data-shot` is the page to capture, relative to the sitemap; `#id` captures one `section[data-page]` of a concept. On a page with a state machine, `data-preset="paused-halfway"` applies a preset, `data-state="paused"` picks a state and `data-context='{"gps":"lost"}'` merges into the context, in that order. `data-viewport="1440x900"` on the `<img>` or any ancestor changes the size (default 390x844).
 - `src` is where the PNG goes, under `flows/shots/`. Run `planchest shots` from the repo root after any screen in the map changes; it renders every `data-shot` with Playwright and overwrites the PNGs. Commit them with the change. The viewer does not list `flows/shots/` as entries.
 - A step with no page yet is `<li data-status="missing">` with `<figure><div class="empty">Not built yet</div></figure>` in place of a screenshot.
 
