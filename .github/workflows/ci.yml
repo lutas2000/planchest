@@ -20,6 +20,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: npm ci
       - run: npm run check
+      # For the report page's browser test.
+      - run: npx playwright install --with-deps chromium
       - run: npm test
       # The diff report page is committed (the plugin runs without a build);
       # npm test rebuilt it, so any difference means it was not rebuilt.
