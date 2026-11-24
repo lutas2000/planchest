@@ -21,6 +21,7 @@ export const TEMPLATE = `<!doctype html>
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --nav-w: 280px; --summary-w: 360px;
+  --ease: cubic-bezier(.2, 0, 0, 1);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -40,6 +41,10 @@ html, body { height: 100%; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); font-variant-numeric: tabular-nums; display: grid; grid-template-rows: auto 1fr; }
 button { font: inherit; color: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Motion: quick colour changes on hover and selection, nothing that loops. */
+button, summary { transition: background-color 120ms var(--ease), color 120ms var(--ease), border-color 120ms var(--ease); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-4px); } }
 header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
 header h1 { font-size: 15px; margin: 0; font-weight: 500; }
 header .sides { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -103,7 +108,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
 .toolbar .custom summary { list-style: none; display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); cursor: pointer; }
 .toolbar .custom summary::-webkit-details-marker { display: none; }
 .toolbar .custom summary:hover, .toolbar .custom[open] summary { background: var(--hover); color: var(--fg); }
-.toolbar .custom .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
+.toolbar .custom .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 8px 24px rgb(0 0 0 / .12); animation: menu-in 160ms var(--ease); }
 .toolbar .custom label { justify-content: space-between; }
 .toolbar .path { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .stage { position: relative; overflow: auto; padding: 16px; }

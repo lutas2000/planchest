@@ -9,6 +9,7 @@
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --nav-w: 280px; --details-w: 360px;
+  --ease: cubic-bezier(.2, 0, 0, 1);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -36,6 +37,10 @@ select, input[type="search"] {
   background: var(--panel);
 }
 select:disabled { opacity: .5; }
+
+/* Motion: quick colour changes on hover and selection, nothing that loops. */
+button, summary, .cards button { transition: background-color 120ms var(--ease), color 120ms var(--ease), border-color 120ms var(--ease); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* Status colours: the viewer's equivalent of the diff's change colours. */
 .approved { --status: var(--added); }
