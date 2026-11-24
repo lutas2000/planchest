@@ -34,16 +34,16 @@ header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; pad
 header h1 { font-size: 15px; margin: 0; font-weight: 600; }
 header .sides { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 header .sides b { color: var(--fg); font-weight: 600; }
-header .counts { margin-left: auto; display: flex; gap: 10px; font-size: 12px; }
-.count { padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+header .counts { margin-left: auto; display: flex; gap: 12px; font-size: 12px; }
+.count { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .count.added { color: var(--added); border-color: currentColor; }
 .count.removed { color: var(--removed); border-color: currentColor; }
 .count.changed { color: var(--changed); border-color: currentColor; }
 .group { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.group button { border: 0; background: none; font-size: 12px; padding: 4px 10px; cursor: pointer; }
+.group button { border: 0; background: none; font-size: 12px; height: 28px; padding: 0 12px; cursor: pointer; }
 .group button + button { border-left: 1px solid var(--line); }
 .group button[aria-pressed="true"] { background: var(--accent); color: #fff; }
-header .panels button { display: inline-flex; align-items: center; gap: 6px; }
+header .panels button { display: inline-flex; align-items: center; gap: 8px; }
 header .panels button::before { content: ""; width: 10px; height: 8px; border: 1px solid currentColor; border-radius: 2px; opacity: .8; }
 header .panels button[data-panel="nav"]::before { border-left-width: 4px; }
 header .panels button[data-panel="summary"]::before { border-right-width: 4px; }
@@ -51,47 +51,48 @@ header .panels button[data-panel="summary"]::before { border-right-width: 4px; }
 main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; min-height: 0; }
 nav { width: var(--nav-w); border-right: 1px solid var(--line); overflow: auto; padding: 8px 0; background: var(--panel); }
 main[data-nav="off"] nav { display: none; }
-nav h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 12px 16px 4px; font-weight: 600; }
-nav h2:first-child { margin-top: 4px; }
-nav button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 5px 16px 5px 28px; cursor: pointer; position: relative; word-break: break-all; }
+nav h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 24px 16px 8px; font-weight: 600; }
+nav h2:first-child { margin-top: 8px; }
+nav button { display: block; width: 100%; text-align: left; border: 0; background: none; min-height: 32px; padding: 6px 16px 6px 32px; cursor: pointer; position: relative; overflow-wrap: anywhere; }
 nav button:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 nav button[aria-current="true"] { background: color-mix(in srgb, var(--accent) 14%, transparent); }
-nav button::before { content: ""; position: absolute; left: 14px; top: 11px; width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+nav button::before { content: ""; position: absolute; left: 16px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
 nav button.added::before { background: var(--added); }
 nav button.removed::before { background: var(--removed); }
 nav button.changed::before { background: var(--changed); }
-nav button .status { float: right; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 6px; }
-nav button.section { padding-left: 44px; font-family: var(--mono); font-size: 12px; }
-nav button.section::before { left: 30px; }
+nav button .status { float: right; font-size: 10px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: 8px; }
+nav button.section { min-height: 28px; padding: 4px 16px 4px 48px; font-family: var(--mono); font-size: 12px; }
+nav button.section::before { left: 32px; top: 10px; }
 nav details summary { cursor: pointer; list-style: none; }
 nav details summary::-webkit-details-marker { display: none; }
 nav details summary h2::after { content: " ▸"; }
 nav details[open] summary h2::after { content: " ▾"; }
-nav .files { padding: 0 16px 8px 28px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
-nav .files div { padding: 2px 0; word-break: break-all; }
+nav .files { padding: 0 16px 8px 32px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+nav .files div { padding: 4px 0; overflow-wrap: anywhere; }
 nav .files .added { color: var(--added); } nav .files .removed { color: var(--removed); } nav .files .changed { color: var(--changed); }
 
 aside { width: var(--summary-w); border-left: 1px solid var(--line); overflow: auto; padding: 0 16px 16px; background: var(--panel); }
 main[data-summary="off"] aside { display: none; }
-aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 14px 0 4px; }
-aside p, aside ul, aside ol { margin: 0 0 10px; }
-aside ul, aside ol { padding-left: 18px; }
+aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin: 24px 0 8px; }
+aside h2:first-child { margin-top: 16px; }
+aside p, aside ul, aside ol { margin: 0 0 12px; }
+aside ul, aside ol { padding-left: 20px; }
 aside li + li { margin-top: 4px; }
 aside a { color: var(--accent); text-decoration: none; font-family: var(--mono); font-size: 12px; }
 aside a:hover { text-decoration: underline; }
 aside code { font-family: var(--mono); font-size: 12px; padding: 0 4px; border-radius: 4px; background: color-mix(in srgb, var(--fg) 8%, transparent); }
-aside .none { color: var(--muted); font-size: 12px; margin-top: 14px; }
+aside .none { color: var(--muted); font-size: 12px; margin-top: 16px; }
 
 section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-width: 0; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); font-size: 12px; }
-.toolbar label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.toolbar label { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); }
 .toolbar label[hidden] { display: none; }
-.toolbar input[type=number] { width: 64px; font: inherit; padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: inherit; }
+.toolbar input[type=number] { width: 64px; font: inherit; height: 28px; padding: 0 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: inherit; }
 .toolbar .path { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .stage { position: relative; overflow: auto; padding: 16px; }
 .pair { position: relative; display: flex; gap: 16px; align-items: flex-start; width: max-content; margin: 0 auto; }
 .frame { position: relative; flex: 0 0 auto; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.frame .tag { position: absolute; top: 0; left: 0; z-index: 2; font: 600 10px/1 var(--mono); padding: 4px 6px; background: var(--fg); color: var(--bg); border-bottom-right-radius: 6px; opacity: .85; pointer-events: none; }
+.frame .tag { position: absolute; top: 0; left: 0; z-index: 2; font: 600 10px/1 var(--mono); padding: 4px 8px; background: var(--fg); color: var(--bg); border-bottom-right-radius: 6px; opacity: .85; pointer-events: none; }
 .frame iframe { display: block; border: 0; background: #fff; transform-origin: 0 0; transform: scale(var(--zoom, 1)); }
 .frame.missing { display: grid; place-items: center; color: var(--muted); font-size: 12px; }
 .stage.overlay .pair .frame + .frame { position: absolute; top: 0; left: 0; }
@@ -212,7 +213,7 @@ section.view { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-w
   function pageButton(p) {
     const st = p.status && (p.status.b || p.status.a);
     let out = '<button class="' + p.change + '" data-file="' + esc(p.file) + '" title="' + esc(p.title || p.file) + '">' +
-      (st ? '<span class="status">' + esc(st) + "</span>" : "") + esc(p.file) + "</button>";
+      (st ? '<span class="status">' + esc(st) + "</span>" : "") + esc(p.file).split("/").join("/<wbr>") + "</button>";
     for (const s of p.sections || []) {
       out += '<button class="section ' + s.change + '" data-file="' + esc(p.file) + '" data-section="' + esc(s.id) + '">#' + esc(s.id) + "</button>";
     }
